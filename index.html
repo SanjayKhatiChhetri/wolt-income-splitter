@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wolt Income Splitter & Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f4f8;
+            color: #1a202c;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        .card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        h2,
+        h3 {
+            margin-top: 0;
+            color: #00c2e8;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .sub-label {
+            font-size: 0.8em;
+            color: #64748b;
+            margin-bottom: 3px;
+            font-weight: normal;
+        }
+
+        input[type="number"],
+        input[type="text"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .worker-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .worker-row input {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        button {
+            background-color: #00c2e8;
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #00a0c2;
+        }
+
+        .btn-success {
+            background-color: #10b981;
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            width: auto;
+            padding: 12px;
+        }
+
+        .btn-secondary {
+            background-color: #64748b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 8px;
+            text-align: right;
+        }
+
+        th {
+            text-align: right;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        td:first-child,
+        th:first-child {
+            text-align: left;
+        }
+
+        .summary-text {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-link {
+            display: inline-block;
+            margin-bottom: 15px;
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <a href="history.html" class="nav-link">View Analytics & History →</a>
+
+    <div class="card">
+        <h2>Wolt Splitter</h2>
+
+        <div class="input-group">
+            <label>Work Period</label>
+            <select id="workPeriod" onchange="toggleCustomPeriod()" style="margin-bottom: 10px;">
+                <option value="1st - 15th (Payday: 25th)">1st - 15th (Payday: 25th)</option>
+                <option value="16th - End of Month (Payday: 10th)">16th - End of Month (Payday: 10th)</option>
+                <option value="Custom">Custom Dates</option>
+            </select>
+
+            <div id="customPeriodContainer" style="display: none; margin-top: 10px;">
+                <div class="flex-row">
+                    <div style="flex: 1;">
+                        <div class="sub-label">Start Date</div>
+                        <input type="date" id="customStartDate">
+                    </div>
+                    <div style="flex: 1;">
+                        <div class="sub-label">End Date</div>
+                        <input type="date" id="customEndDate">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-row">
+            <div class="input-group" style="flex: 1;">
+                <label>Owner Cut (%)</label>
+                <input type="number" id="commission" value="25" step="0.1">
+            </div>
+            <div class="input-group" style="flex: 1;">
+                <label>Shared Expenses (€)</label>
+                <input type="number" id="expenses" value="0" step="0.01">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Workers</h3>
+        <div id="workersList">
+            <div class="worker-row">
+                <input type="text" placeholder="Name" value="Lalit" class="w-name">
+                <input type="number" placeholder="Gross (€)" value="1431.97" class="w-gross" step="0.01">
+                <button class="btn-danger" onclick="this.parentElement.remove()">X</button>
+            </div>
+            <div class="worker-row">
+                <input type="text" placeholder="Name" value="Ashish" class="w-name">
+                <input type="number" placeholder="Gross (€)" value="810.54" class="w-gross" step="0.01">
+                <button class="btn-danger" onclick="this.parentElement.remove()">X</button>
+            </div>
+        </div>
+        <button onclick="addWorker()" class="btn-secondary">+ Add Worker</button>
+        <button onclick="calculate()" class="btn-success">Calculate Splits</button>
+    </div>
+
+    <div class="card" id="resultsCard" style="display: none;">
+        <h3>Results</h3>
+        <div id="summary"></div>
+        <div style="overflow-x: auto;">
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Gross</th>
+                        <th>Take-home</th>
+                        <th>%</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <button onclick="saveToDatabase()" id="saveBtn" style="margin-top: 20px; background-color: #6366f1;">Save to
+            History</button>
+        <p id="saveStatus" style="text-align: center; font-weight: bold; margin-top: 10px;"></p>
+    </div>
+
+    <script>
+        // --- PUT YOUR SUPABASE KEYS HERE ---
+        const SUPABASE_URL = 'https://cuutpjofkllrmdeilgja.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1dXRwam9ma2xscm1kZWlsZ2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg4ODMsImV4cCI6MjA5MTIyNDg4M30.jskWv0hnsnjTIn6682q9CULdmJ5-a3jMEIBMGhKq9nQ';
+
+        let supabaseClient = null;
+        const userPin = prompt("Enter your secret database PIN:");
+
+        if (userPin) {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                global: { headers: { 'x-app-pin': userPin } }
+            });
+        }
+
+        let currentCalculationData = null;
+
+        // Toggle Date Pickers
+        function toggleCustomPeriod() {
+            const select = document.getElementById('workPeriod');
+            const customContainer = document.getElementById('customPeriodContainer');
+            if (select.value === 'Custom') {
+                customContainer.style.display = 'block';
+            } else {
+                customContainer.style.display = 'none';
+            }
+        }
+
+        function addWorker() {
+            const div = document.createElement('div');
+            div.className = 'worker-row';
+            div.innerHTML = `
+                <input type="text" placeholder="Name" class="w-name">
+                <input type="number" placeholder="Gross (€)" class="w-gross" step="0.01">
+                <button class="btn-danger" onclick="this.parentElement.remove()">X</button>
+            `;
+            document.getElementById('workersList').appendChild(div);
+        }
+
+        function calculate() {
+            const commissionPct = parseFloat(document.getElementById('commission').value) || 0;
+            const expenses = parseFloat(document.getElementById('expenses').value) || 0;
+
+            // Format the selected period
+            let selectedPeriod = document.getElementById('workPeriod').value;
+            if (selectedPeriod === 'Custom') {
+                const startDate = document.getElementById('customStartDate').value;
+                const endDate = document.getElementById('customEndDate').value;
+
+                if (startDate && endDate) {
+                    selectedPeriod = `${startDate} to ${endDate}`;
+                } else {
+                    selectedPeriod = 'Custom Dates (Not fully selected)';
+                }
+            }
+
+            const workerRows = document.querySelectorAll('.worker-row');
+            let workers = [];
+            let totalGross = 0;
+
+            workerRows.forEach(row => {
+                const name = row.querySelector('.w-name').value || 'Unknown';
+                const gross = parseFloat(row.querySelector('.w-gross').value) || 0;
+                if (gross > 0) { workers.push({ name, gross }); totalGross += gross; }
+            });
+
+            if (totalGross === 0) return alert("Total Gross must be greater than 0");
+
+            const netIncome = totalGross - expenses;
+            const ownerCut = netIncome * (commissionPct / 100);
+            const workersPool = netIncome - ownerCut;
+
+            document.getElementById('resultsCard').style.display = 'block';
+            const tbody = document.querySelector('#resultsTable tbody');
+            tbody.innerHTML = '';
+
+            document.getElementById('summary').innerHTML = `
+                <div class="summary-text" style="color: #6366f1; font-size: 0.9em; margin-bottom: 15px;">Period: ${selectedPeriod}</div>
+                <div class="summary-text">Total Gross: €${totalGross.toFixed(4)}</div>
+                <div class="summary-text">Expenses: €${expenses.toFixed(4)}</div>
+                <div class="summary-text" style="color: #ef4444;">Net Distributable: €${netIncome.toFixed(4)}</div>
+            `;
+
+            let workersDataForDB = [];
+
+            workers.forEach(w => {
+                let proportion = w.gross / totalGross;
+                let finalShare = workersPool * proportion;
+                let finalPct = (finalShare / totalGross) * 100;
+                workersDataForDB.push({ name: w.name, gross: w.gross, final_share: finalShare });
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${w.name}</td>
+                        <td>€${w.gross.toFixed(2)}</td>
+                        <td style="font-weight:bold;">€${finalShare.toFixed(2)}</td>
+                        <td>${finalPct.toFixed(1)}%</td>
+                    </tr>
+                `;
+            });
+
+            let ownerPct = (ownerCut / totalGross) * 100;
+            tbody.innerHTML += `
+                <tr style="background-color: #f8fafc; font-weight: bold;">
+                    <td>Owner</td>
+                    <td>-</td>
+                    <td style="color:#00c2e8;">€${ownerCut.toFixed(2)}</td>
+                    <td>${ownerPct.toFixed(1)}%</td>
+                </tr>
+            `;
+
+            currentCalculationData = {
+                work_period: selectedPeriod,
+                total_gross: totalGross,
+                owner_cut: ownerCut,
+                expenses: expenses,
+                workers_data: workersDataForDB
+            };
+
+            document.getElementById('saveStatus').innerText = "";
+            document.getElementById('saveBtn').disabled = false;
+            document.getElementById('saveBtn').innerText = "Save to History";
+        }
+
+        async function saveToDatabase() {
+            if (!currentCalculationData) return;
+            if (!supabaseClient) return alert("Database connection not initialized.");
+
+            const btn = document.getElementById('saveBtn');
+            btn.innerText = "Saving...";
+            btn.disabled = true;
+
+            const { data, error } = await supabaseClient
+                .from('wolt_splits')
+                .insert([currentCalculationData]);
+
+            if (error) {
+                console.error('Error:', error);
+                document.getElementById('saveStatus').innerText = "Access Denied / Error.";
+                document.getElementById('saveStatus').style.color = "#ef4444";
+                btn.innerText = "Try Again";
+                btn.disabled = false;
+            } else {
+                document.getElementById('saveStatus').innerText = "Successfully saved to database!";
+                document.getElementById('saveStatus').style.color = "#10b981";
+                btn.innerText = "Saved";
+            }
+        }
+    </script>
+</body>
+
+</html>

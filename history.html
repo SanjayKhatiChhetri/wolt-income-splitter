@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wolt Analytics & History</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f4f8;
+            color: #1a202c;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        .card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #00c2e8;
+        }
+
+        .nav-link {
+            display: inline-block;
+            margin-bottom: 15px;
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.85em;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 6px;
+            text-align: right;
+        }
+
+        th {
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        td:first-child,
+        th:first-child {
+            text-align: left;
+        }
+
+        td:nth-child(2),
+        th:nth-child(2) {
+            text-align: left;
+            color: #6366f1;
+            font-weight: bold;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #00c2e8;
+            margin-top: 5px;
+        }
+
+        .error {
+            color: #ef4444;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <a href="index.html" class="nav-link">← Back to Calculator</a>
+
+    <div class="card">
+        <h2>Earnings Overview</h2>
+        <div class="stat-grid">
+            <div class="stat-box">
+                <div>Total Gross Ever</div>
+                <div class="stat-value" id="stat-gross">€0</div>
+            </div>
+            <div class="stat-box">
+                <div>Total Owner Cut</div>
+                <div class="stat-value" id="stat-owner" style="color: #10b981;">€0</div>
+            </div>
+        </div>
+        <canvas id="earningsChart" width="400" height="200"></canvas>
+    </div>
+
+    <div class="card" style="overflow-x: auto;">
+        <h2>History List</h2>
+        <p id="loadingText" style="text-align: center; color: #64748b;">Loading data securely...</p>
+        <table id="historyTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Saved On</th>
+                    <th>Work Period</th>
+                    <th>Gross</th>
+                    <th>Expenses</th>
+                    <th>Owner Cut</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://cuutpjofkllrmdeilgja.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1dXRwam9ma2xscm1kZWlsZ2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg4ODMsImV4cCI6MjA5MTIyNDg4M30.jskWv0hnsnjTIn6682q9CULdmJ5-a3jMEIBMGhKq9nQ';
+
+        const userPin = prompt("Enter your secret database PIN to view history:");
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            global: { headers: { 'x-app-pin': userPin } }
+        });
+
+        async function loadData() {
+            if (!userPin) {
+                document.getElementById('loadingText').innerHTML = '<span class="error">PIN required.</span>';
+                return;
+            }
+
+            const { data, error } = await supabaseClient
+                .from('wolt_splits')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                document.getElementById('loadingText').innerHTML = '<span class="error">Access Denied / Error.</span>';
+                return;
+            }
+
+            if (data.length === 0) {
+                document.getElementById('loadingText').innerText = "No history found.";
+                return;
+            }
+
+            document.getElementById('loadingText').style.display = 'none';
+            document.getElementById('historyTable').style.display = 'table';
+            renderDashboard(data);
+        }
+
+        function renderDashboard(data) {
+            let totalGrossEver = 0;
+            let totalOwnerEver = 0;
+            const dates = [];
+            const grossData = [];
+            const ownerData = [];
+            const tbody = document.querySelector('#historyTable tbody');
+
+            const chartData = [...data].reverse();
+
+            chartData.forEach(row => {
+                const dateObj = new Date(row.created_at);
+                dates.push(dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+                grossData.push(row.total_gross);
+                ownerData.push(row.owner_cut);
+            });
+
+            data.forEach(row => {
+                totalGrossEver += parseFloat(row.total_gross);
+                totalOwnerEver += parseFloat(row.owner_cut);
+                const dateStr = new Date(row.created_at).toLocaleDateString();
+                const period = row.work_period || 'N/A'; // Shows N/A for old entries without a period
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${dateStr}</td>
+                        <td>${period}</td>
+                        <td>€${parseFloat(row.total_gross).toFixed(2)}</td>
+                        <td>€${parseFloat(row.expenses).toFixed(2)}</td>
+                        <td style="font-weight: bold; color: #10b981;">€${parseFloat(row.owner_cut).toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('stat-gross').innerText = `€${totalGrossEver.toFixed(2)}`;
+            document.getElementById('stat-owner').innerText = `€${totalOwnerEver.toFixed(2)}`;
+
+            const ctx = document.getElementById('earningsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        { label: 'Total Gross (€)', data: grossData, borderColor: '#00c2e8', tension: 0.3, fill: false },
+                        { label: 'Owner Cut (€)', data: ownerData, borderColor: '#10b981', tension: 0.3, fill: false }
+                    ]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        window.onload = loadData;
+    </script>
+</body>
+
+</html>
