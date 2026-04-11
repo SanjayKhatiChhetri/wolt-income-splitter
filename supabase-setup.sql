@@ -4,6 +4,7 @@ create table if not exists public.wolt_splits (
     id uuid primary key default gen_random_uuid(),
     user_id uuid not null references auth.users(id) on delete cascade,
     user_email text,
+    owner_name text,
     work_period text not null,
     total_gross numeric not null default 0,
     owner_cut numeric not null default 0,
@@ -15,6 +16,7 @@ create table if not exists public.wolt_splits (
 alter table public.wolt_splits add column if not exists id uuid default gen_random_uuid();
 alter table public.wolt_splits add column if not exists user_id uuid references auth.users(id) on delete cascade;
 alter table public.wolt_splits add column if not exists user_email text;
+alter table public.wolt_splits add column if not exists owner_name text;
 alter table public.wolt_splits add column if not exists work_period text;
 alter table public.wolt_splits add column if not exists total_gross numeric default 0;
 alter table public.wolt_splits add column if not exists owner_cut numeric default 0;

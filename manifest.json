@@ -1,0 +1,18 @@
+{
+  "name": "Wolt Income Splitter",
+  "short_name": "Wolt Split",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#00c2e8",
+  "description": "Split Wolt delivery income, save history, and manage payouts from your phone.",
+  "icons": [
+    {
+      "src": "app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

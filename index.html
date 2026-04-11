@@ -4,6 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#00c2e8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="app-icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="app-icon.svg">
     <title>Wolt Income Splitter</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -222,6 +228,19 @@
             align-items: center;
         }
 
+        .install-banner {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            background: #ecfeff;
+            border: 1px solid #a5f3fc;
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 20px;
+        }
+
         .user-badge {
             padding: 10px 12px;
             background: #eff6ff;
@@ -262,6 +281,14 @@
         </div>
     </div>
 
+    <div class="install-banner hidden" id="installBanner">
+        <div>
+            <strong>Install App</strong>
+            <div class="muted">Add Wolt Income Splitter to your phone home screen.</div>
+        </div>
+        <button type="button" id="installBtn">Install</button>
+    </div>
+
     <div class="card" id="authCard">
         <h2>Login</h2>
         <p class="muted">Create an account or sign in so each person sees only their own calculations.</p>
@@ -296,13 +323,17 @@
                         <input type="date" id="customEndDate" onchange="updatePeriodPreview()">
                     </div>
                 </div>
-                <div class="period-preview" id="periodPreview">Selected period: choose your custom date range</div>
+                <div class="period-preview hidden" id="periodPreview"></div>
             </div>
         </div>
 
         <div class="card">
             <h2>Split Settings</h2>
             <div class="flex-row">
+                <div class="input-group" style="flex: 1;">
+                    <label for="ownerName">Owner Name</label>
+                    <input type="text" id="ownerName" value="Owner" placeholder="Your name">
+                </div>
                 <div class="input-group" style="flex: 1;">
                     <label for="commission">Owner Cut (%)</label>
                     <input type="number" id="commission" value="25" step="0.1">
@@ -352,11 +383,13 @@
         const SUPABASE_URL = 'https://cuutpjofkllrmdeilgja.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1dXRwam9ma2xscm1kZWlsZ2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg4ODMsImV4cCI6MjA5MTIyNDg4M30.jskWv0hnsnjTIn6682q9CULdmJ5-a3jMEIBMGhKq9nQ';
         const LOCAL_HISTORY_PREFIX = 'woltSplitterHistory';
+        const APP_URL = 'https://wolt-income-spliter.netlify.app/';
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
         let currentCalculationData = null;
+        let deferredInstallPrompt = null;
 
         function getLocalHistoryKey() {
             return currentUser ? `${LOCAL_HISTORY_PREFIX}:${currentUser.id}` : LOCAL_HISTORY_PREFIX;
@@ -408,11 +441,14 @@
             const endDate = document.getElementById('customEndDate').value;
 
             if (startDate && endDate) {
+                preview.classList.remove('hidden');
                 preview.innerText = `Selected period: ${formatDisplayDate(startDate)} to ${formatDisplayDate(endDate)}`;
             } else if (startDate || endDate) {
+                preview.classList.remove('hidden');
                 preview.innerText = 'Selected period: choose both dates to complete the range';
             } else {
-                preview.innerText = 'Selected period: choose your custom date range';
+                preview.innerText = '';
+                preview.classList.add('hidden');
             }
         }
 
@@ -452,6 +488,7 @@
             }
 
             const selectedPeriod = `${formatDisplayDate(startDate)} to ${formatDisplayDate(endDate)}`;
+            const ownerName = document.getElementById('ownerName').value.trim() || 'Owner';
             const commissionPct = parseFloat(document.getElementById('commission').value) || 0;
             const expenses = parseFloat(document.getElementById('expenses').value) || 0;
             const workerRows = document.querySelectorAll('.worker-row');
@@ -484,6 +521,7 @@
                 <div class="summary-text" style="color: #6366f1;">Period: ${selectedPeriod}</div>
                 <div class="summary-text">Total Gross: €${totalGross.toFixed(2)}</div>
                 <div class="summary-text">Expenses: €${expenses.toFixed(2)}</div>
+                <div class="summary-text">Owner: ${ownerName}</div>
                 <div class="summary-text" style="color: #ef4444;">Net Distributable: €${netIncome.toFixed(2)}</div>
             `;
 
@@ -508,7 +546,7 @@
             const ownerPct = (ownerCut / totalGross) * 100;
             tbody.innerHTML += `
                 <tr style="background-color: #f8fafc; font-weight: 700;">
-                    <td>Owner</td>
+                    <td>${ownerName}</td>
                     <td>-</td>
                     <td style="color: #00c2e8;">€${ownerCut.toFixed(2)}</td>
                     <td>${ownerPct.toFixed(1)}%</td>
@@ -518,6 +556,7 @@
             currentCalculationData = {
                 user_id: currentUser.id,
                 user_email: currentUser.email,
+                owner_name: ownerName,
                 work_period: selectedPeriod,
                 total_gross: totalGross,
                 owner_cut: ownerCut,
@@ -593,7 +632,13 @@
                 return;
             }
 
-            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            const { data, error } = await supabaseClient.auth.signUp({
+                email,
+                password,
+                options: {
+                    emailRedirectTo: APP_URL
+                }
+            });
             if (error) {
                 setStatus('authStatus', error.message, 'error');
                 return;
@@ -638,12 +683,40 @@
 
         async function initializeAuth() {
             document.getElementById('logoutBtn').addEventListener('click', logoutUser);
+            document.getElementById('installBtn').addEventListener('click', installApp);
 
             const { data } = await supabaseClient.auth.getSession();
             renderAuthState(data.session?.user || null);
 
             supabaseClient.auth.onAuthStateChange((_event, session) => {
                 renderAuthState(session?.user || null);
+            });
+        }
+
+        async function installApp() {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            document.getElementById('installBanner').classList.add('hidden');
+        }
+
+        window.addEventListener('beforeinstallprompt', event => {
+            event.preventDefault();
+            deferredInstallPrompt = event;
+            document.getElementById('installBanner').classList.remove('hidden');
+        });
+
+        window.addEventListener('appinstalled', () => {
+            deferredInstallPrompt = null;
+            document.getElementById('installBanner').classList.add('hidden');
+        });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js').catch(error => {
+                    console.error('Service worker registration failed:', error);
+                });
             });
         }
 
