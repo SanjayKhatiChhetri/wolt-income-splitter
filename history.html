@@ -96,6 +96,11 @@
             font-weight: bold;
             text-align: center;
         }
+
+        .info {
+            color: #64748b;
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -121,6 +126,7 @@
     <div class="card" style="overflow-x: auto;">
         <h2>History List</h2>
         <p id="loadingText" style="text-align: center; color: #64748b;">Loading data securely...</p>
+        <p id="statusText" class="info" style="display: none;"></p>
         <table id="historyTable" style="display: none;">
             <thead>
                 <tr>
@@ -138,31 +144,73 @@
     <script>
         const SUPABASE_URL = 'https://cuutpjofkllrmdeilgja.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1dXRwam9ma2xscm1kZWlsZ2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg4ODMsImV4cCI6MjA5MTIyNDg4M30.jskWv0hnsnjTIn6682q9CULdmJ5-a3jMEIBMGhKq9nQ';
+        const APP_PIN_STORAGE_KEY = 'woltSplitterPin';
+        const APP_HISTORY_STORAGE_KEY = 'woltSplitterHistory';
+        const storedPin = localStorage.getItem(APP_PIN_STORAGE_KEY);
+        const userPin = storedPin || prompt("Enter your secret database PIN to view history:");
+        let earningsChart = null;
 
-        const userPin = prompt("Enter your secret database PIN to view history:");
+        if (userPin) {
+            localStorage.setItem(APP_PIN_STORAGE_KEY, userPin);
+        }
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             global: { headers: { 'x-app-pin': userPin } }
         });
 
-        async function loadData() {
-            if (!userPin) {
-                document.getElementById('loadingText').innerHTML = '<span class="error">PIN required.</span>';
-                return;
+        function getLocalHistory() {
+            try {
+                const raw = localStorage.getItem(APP_HISTORY_STORAGE_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (error) {
+                console.error('Failed to read local history:', error);
+                return [];
             }
+        }
 
-            const { data, error } = await supabaseClient
-                .from('wolt_splits')
-                .select('*')
-                .order('created_at', { ascending: false });
+        function showStatus(message, isError = false) {
+            const statusText = document.getElementById('statusText');
+            statusText.innerText = message;
+            statusText.style.display = 'block';
+            statusText.style.color = isError ? '#ef4444' : '#64748b';
+        }
 
-            if (error) {
-                document.getElementById('loadingText').innerHTML = '<span class="error">Access Denied / Error.</span>';
+        function showNoData(message) {
+            document.getElementById('loadingText').innerHTML = message;
+            document.getElementById('historyTable').style.display = 'none';
+        }
+
+        async function loadData() {
+            const localHistory = getLocalHistory();
+            let data = [];
+
+            if (userPin) {
+                const response = await supabaseClient
+                    .from('wolt_splits')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (!response.error && Array.isArray(response.data) && response.data.length > 0) {
+                    data = response.data;
+                } else if (localHistory.length > 0) {
+                    data = localHistory;
+                    showStatus('Loaded local history because the database could not be reached.');
+                } else if (response.error) {
+                    showNoData('<span class="error">Could not load history from the database.</span>');
+                    showStatus(response.error.message || 'Unknown database error.', true);
+                    return;
+                }
+            } else if (localHistory.length > 0) {
+                data = localHistory;
+                showStatus('Loaded local history. Enter the PIN on the calculator page first if you want database sync.');
+            } else {
+                showNoData('<span class="error">PIN required.</span>');
                 return;
             }
 
             if (data.length === 0) {
-                document.getElementById('loadingText').innerText = "No history found.";
+                showNoData("No history found.");
                 return;
             }
 
@@ -178,6 +226,7 @@
             const grossData = [];
             const ownerData = [];
             const tbody = document.querySelector('#historyTable tbody');
+            tbody.innerHTML = '';
 
             const chartData = [...data].reverse();
 
@@ -209,7 +258,11 @@
             document.getElementById('stat-owner').innerText = `€${totalOwnerEver.toFixed(2)}`;
 
             const ctx = document.getElementById('earningsChart').getContext('2d');
-            new Chart(ctx, {
+            if (earningsChart) {
+                earningsChart.destroy();
+            }
+
+            earningsChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: dates,

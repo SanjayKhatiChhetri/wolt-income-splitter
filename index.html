@@ -239,8 +239,16 @@
         const SUPABASE_URL = 'https://cuutpjofkllrmdeilgja.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1dXRwam9ma2xscm1kZWlsZ2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg4ODMsImV4cCI6MjA5MTIyNDg4M30.jskWv0hnsnjTIn6682q9CULdmJ5-a3jMEIBMGhKq9nQ';
 
+        const APP_PIN_STORAGE_KEY = 'woltSplitterPin';
+        const APP_HISTORY_STORAGE_KEY = 'woltSplitterHistory';
+
         let supabaseClient = null;
-        const userPin = prompt("Enter your secret database PIN:");
+        const storedPin = localStorage.getItem(APP_PIN_STORAGE_KEY);
+        const userPin = storedPin || prompt("Enter your secret database PIN:");
+
+        if (userPin) {
+            localStorage.setItem(APP_PIN_STORAGE_KEY, userPin);
+        }
 
         if (userPin) {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -249,6 +257,30 @@
         }
 
         let currentCalculationData = null;
+
+        function getLocalHistory() {
+            try {
+                const raw = localStorage.getItem(APP_HISTORY_STORAGE_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (error) {
+                console.error('Failed to read local history:', error);
+                return [];
+            }
+        }
+
+        function saveCalculationToLocalHistory(calculation) {
+            try {
+                const localHistory = getLocalHistory();
+                localHistory.unshift({
+                    ...calculation,
+                    created_at: new Date().toISOString()
+                });
+                localStorage.setItem(APP_HISTORY_STORAGE_KEY, JSON.stringify(localHistory));
+            } catch (error) {
+                console.error('Failed to save local history:', error);
+            }
+        }
 
         // Toggle Date Pickers
         function toggleCustomPeriod() {
@@ -371,11 +403,12 @@
 
             if (error) {
                 console.error('Error:', error);
-                document.getElementById('saveStatus').innerText = "Access Denied / Error.";
-                document.getElementById('saveStatus').style.color = "#ef4444";
-                btn.innerText = "Try Again";
-                btn.disabled = false;
+                saveCalculationToLocalHistory(currentCalculationData);
+                document.getElementById('saveStatus').innerText = "Saved locally. Database sync failed.";
+                document.getElementById('saveStatus').style.color = "#f59e0b";
+                btn.innerText = "Saved Locally";
             } else {
+                saveCalculationToLocalHistory(currentCalculationData);
                 document.getElementById('saveStatus').innerText = "Successfully saved to database!";
                 document.getElementById('saveStatus').style.color = "#10b981";
                 btn.innerText = "Saved";
