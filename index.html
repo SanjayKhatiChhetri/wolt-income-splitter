@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Wolt Income Splitter & Tracker</title>
+    <title>Wolt Income Splitter</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f4f8;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(180deg, #eef7fb 0%, #f8fafc 100%);
             color: #1a202c;
-            max-width: 800px;
+            max-width: 860px;
             margin: 0 auto;
             padding: 15px;
         }
@@ -19,45 +19,157 @@
         .card {
             background: #fff;
             padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
             margin-bottom: 20px;
         }
 
+        h1,
         h2,
         h3 {
             margin-top: 0;
-            color: #00c2e8;
+            color: #00a8cc;
+        }
+
+        p {
+            line-height: 1.5;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 0.92em;
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        input[type="text"],
+        input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid #dbe3ee;
+            border-radius: 10px;
+            font-size: 16px;
+            background: #fff;
+        }
+
+        button,
+        .nav-link {
+            background: #00c2e8;
+            color: #fff;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 15px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        button:hover,
+        .nav-link:hover {
+            background: #00a0c2;
+        }
+
+        .btn-secondary {
+            background: #64748b;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-success {
+            background: #10b981;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            width: auto;
+            padding: 12px;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .hero {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-copy {
+            max-width: 520px;
+        }
+
+        .muted {
+            color: #64748b;
+        }
+
+        .status {
+            margin-top: 12px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .status.error {
+            color: #ef4444;
+        }
+
+        .status.success {
+            color: #10b981;
+        }
+
+        .status.info {
+            color: #64748b;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 10px;
         }
 
         .input-group {
             margin-bottom: 15px;
         }
 
-        label {
-            display: block;
+        .auth-grid,
+        .period-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .period-panel {
+            border: 1px solid #dbeafe;
+            background: linear-gradient(180deg, #f8fbff 0%, #eef8ff 100%);
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .period-preview {
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #fff;
+            border: 1px dashed #94a3b8;
+            color: #334155;
             font-weight: 600;
-            margin-bottom: 5px;
-            font-size: 0.9em;
-        }
-
-        .sub-label {
-            font-size: 0.8em;
-            color: #64748b;
-            margin-bottom: 3px;
-            font-weight: normal;
-        }
-
-        input[type="number"],
-        input[type="text"],
-        input[type="date"],
-        select {
-            width: 100%;
-            padding: 12px;
-            box-sizing: border-box;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 16px;
         }
 
         .worker-row {
@@ -73,46 +185,11 @@
             min-width: 120px;
         }
 
-        button {
-            background-color: #00c2e8;
-            color: white;
-            border: none;
-            padding: 12px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-            margin-bottom: 10px;
-            font-size: 16px;
-        }
-
-        button:hover {
-            background-color: #00a0c2;
-        }
-
-        .btn-success {
-            background-color: #10b981;
-        }
-
-        .btn-success:hover {
-            background-color: #059669;
-        }
-
-        .btn-danger {
-            background-color: #ef4444;
-            width: auto;
-            padding: 12px;
-        }
-
-        .btn-secondary {
-            background-color: #64748b;
-        }
-
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
-            font-size: 0.9em;
+            font-size: 0.92em;
         }
 
         th,
@@ -123,7 +200,6 @@
         }
 
         th {
-            text-align: right;
             color: #64748b;
             font-weight: 600;
         }
@@ -134,231 +210,161 @@
         }
 
         .summary-text {
-            font-size: 1.1em;
-            font-weight: bold;
+            font-size: 1.05em;
+            font-weight: 700;
             margin-bottom: 8px;
         }
 
-        .flex-row {
+        .top-actions {
             display: flex;
             gap: 10px;
-        }
-
-        .nav-link {
-            display: inline-block;
-            margin-bottom: 15px;
-            color: #6366f1;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .period-panel {
-            border: 1px solid #dbeafe;
-            background: linear-gradient(180deg, #f8fbff 0%, #eef8ff 100%);
-            border-radius: 12px;
-            padding: 14px;
-        }
-
-        .period-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px;
-        }
-
-        .period-card {
-            border: 1px solid #cbd5e1;
-            border-radius: 10px;
-            padding: 12px;
-            background: #ffffff;
-            cursor: pointer;
-            transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .period-card.active {
-            border-color: #00c2e8;
-            box-shadow: 0 8px 20px rgba(0, 194, 232, 0.15);
-            transform: translateY(-1px);
-        }
-
-        .period-card-title {
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .period-card-text {
-            color: #64748b;
-            font-size: 0.85em;
-        }
-
-        .quick-range-row {
-            display: flex;
-            gap: 8px;
             flex-wrap: wrap;
-            margin-top: 12px;
+            align-items: center;
         }
 
-        .quick-range-btn {
-            width: auto;
-            margin-bottom: 0;
-            padding: 8px 12px;
-            font-size: 0.85em;
-            background: #e2e8f0;
-            color: #334155;
-        }
-
-        .quick-range-btn:hover {
-            background: #cbd5e1;
-        }
-
-        .period-preview {
-            margin-top: 12px;
+        .user-badge {
             padding: 10px 12px;
-            border-radius: 10px;
-            background: #ffffff;
-            border: 1px dashed #94a3b8;
-            color: #334155;
-            font-weight: 600;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 999px;
+            color: #1d4ed8;
+            font-weight: 700;
+            font-size: 0.9em;
         }
 
-        .hidden {
-            display: none;
-        }
-
-        @media (max-width: 640px) {
+        @media (max-width: 680px) {
+            .auth-grid,
+            .period-grid,
             .flex-row {
+                grid-template-columns: 1fr;
                 flex-direction: column;
+            }
+
+            .hero {
+                align-items: flex-start;
             }
         }
     </style>
 </head>
 
 <body>
-
-    <a href="history.html" class="nav-link">View Analytics & History →</a>
-
     <div class="card">
-        <h2>Wolt Splitter</h2>
+        <div class="hero">
+            <div class="hero-copy">
+                <h1>Wolt Income Splitter</h1>
+                <p class="muted">Split delivery income across workers, save shared history, and let each user manage their own records with a real login.</p>
+            </div>
+            <div class="top-actions">
+                <a href="history.html" class="nav-link hidden" id="historyLink">View History</a>
+                <div class="user-badge hidden" id="userBadge"></div>
+                <button class="btn-secondary hidden" id="logoutBtn" type="button">Log Out</button>
+            </div>
+        </div>
+    </div>
 
-        <div class="input-group">
-            <label>Work Period</label>
-            <input type="hidden" id="workPeriod" value="1st - 15th (Payday: 25th)">
+    <div class="card" id="authCard">
+        <h2>Login</h2>
+        <p class="muted">Create an account or sign in so each person sees only their own calculations.</p>
+        <div class="auth-grid">
+            <div class="input-group">
+                <label for="authEmail">Email</label>
+                <input type="email" id="authEmail" placeholder="name@example.com" autocomplete="email">
+            </div>
+            <div class="input-group">
+                <label for="authPassword">Password</label>
+                <input type="password" id="authPassword" placeholder="At least 6 characters" autocomplete="current-password">
+            </div>
+        </div>
+        <div class="flex-row">
+            <button type="button" onclick="loginUser()">Log In</button>
+            <button type="button" class="btn-secondary" onclick="signUpUser()">Create Account</button>
+        </div>
+        <p id="authStatus" class="status info hidden"></p>
+    </div>
+
+    <div id="appShell" class="hidden">
+        <div class="card">
+            <h2>Work Period</h2>
             <div class="period-panel">
                 <div class="period-grid">
-                    <div class="period-card active" data-period-value="1st - 15th (Payday: 25th)" onclick="setWorkPeriod('1st - 15th (Payday: 25th)')">
-                        <div class="period-card-title">1st - 15th</div>
-                        <div class="period-card-text">Standard first-half payroll period</div>
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label for="customStartDate">Start Date</label>
+                        <input type="date" id="customStartDate" onchange="updatePeriodPreview()">
                     </div>
-                    <div class="period-card" data-period-value="16th - End of Month (Payday: 10th)" onclick="setWorkPeriod('16th - End of Month (Payday: 10th)')">
-                        <div class="period-card-title">16th - End of Month</div>
-                        <div class="period-card-text">Standard second-half payroll period</div>
-                    </div>
-                    <div class="period-card" data-period-value="Custom" onclick="setWorkPeriod('Custom')">
-                        <div class="period-card-title">Custom Range</div>
-                        <div class="period-card-text">Pick any start and end dates</div>
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label for="customEndDate">End Date</label>
+                        <input type="date" id="customEndDate" onchange="updatePeriodPreview()">
                     </div>
                 </div>
+                <div class="period-preview" id="periodPreview">Selected period: choose your custom date range</div>
+            </div>
+        </div>
 
-                <div id="customPeriodContainer" class="hidden" style="margin-top: 12px;">
-                    <div class="flex-row">
-                        <div style="flex: 1;">
-                            <div class="sub-label">Start Date</div>
-                            <input type="date" id="customStartDate" onchange="updatePeriodPreview()">
-                        </div>
-                        <div style="flex: 1;">
-                        <div class="sub-label">End Date</div>
-                            <input type="date" id="customEndDate" onchange="updatePeriodPreview()">
-                        </div>
-                    </div>
-
-                    <div class="quick-range-row">
-                        <button type="button" class="quick-range-btn" onclick="applyQuickRange(7)">Last 7 Days</button>
-                        <button type="button" class="quick-range-btn" onclick="applyQuickRange(14)">Last 14 Days</button>
-                        <button type="button" class="quick-range-btn" onclick="applyCurrentMonthRange()">This Month</button>
-                    </div>
+        <div class="card">
+            <h2>Split Settings</h2>
+            <div class="flex-row">
+                <div class="input-group" style="flex: 1;">
+                    <label for="commission">Owner Cut (%)</label>
+                    <input type="number" id="commission" value="25" step="0.1">
                 </div>
-
-                <div class="period-preview" id="periodPreview">Selected period: 1st - 15th (Payday: 25th)</div>
+                <div class="input-group" style="flex: 1;">
+                    <label for="expenses">Shared Expenses (€)</label>
+                    <input type="number" id="expenses" value="0" step="0.01">
+                </div>
             </div>
         </div>
 
-        <div class="flex-row">
-            <div class="input-group" style="flex: 1;">
-                <label>Owner Cut (%)</label>
-                <input type="number" id="commission" value="25" step="0.1">
+        <div class="card">
+            <h3>Workers</h3>
+            <div id="workersList">
+                <div class="worker-row">
+                    <input type="text" placeholder="Worker name" class="w-name">
+                    <input type="number" placeholder="Gross (€)" class="w-gross" step="0.01">
+                    <button class="btn-danger" type="button" onclick="removeWorker(this)">X</button>
+                </div>
             </div>
-            <div class="input-group" style="flex: 1;">
-                <label>Shared Expenses (€)</label>
-                <input type="number" id="expenses" value="0" step="0.01">
-            </div>
+            <button type="button" class="btn-secondary" onclick="addWorker()">+ Add Worker</button>
+            <button type="button" class="btn-success" onclick="calculate()">Calculate Splits</button>
         </div>
-    </div>
 
-    <div class="card">
-        <h3>Workers</h3>
-        <div id="workersList">
-            <div class="worker-row">
-                <input type="text" placeholder="Name" value="Lalit" class="w-name">
-                <input type="number" placeholder="Gross (€)" value="1431.97" class="w-gross" step="0.01">
-                <button class="btn-danger" onclick="this.parentElement.remove()">X</button>
+        <div class="card hidden" id="resultsCard">
+            <h3>Results</h3>
+            <div id="summary"></div>
+            <div style="overflow-x: auto;">
+                <table id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Gross</th>
+                            <th>Take-home</th>
+                            <th>%</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
-            <div class="worker-row">
-                <input type="text" placeholder="Name" value="Ashish" class="w-name">
-                <input type="number" placeholder="Gross (€)" value="810.54" class="w-gross" step="0.01">
-                <button class="btn-danger" onclick="this.parentElement.remove()">X</button>
-            </div>
+            <button type="button" onclick="saveToDatabase()" id="saveBtn" style="margin-top: 20px; background-color: #6366f1;">Save to History</button>
+            <p id="saveStatus" class="status info hidden"></p>
         </div>
-        <button onclick="addWorker()" class="btn-secondary">+ Add Worker</button>
-        <button onclick="calculate()" class="btn-success">Calculate Splits</button>
-    </div>
-
-    <div class="card" id="resultsCard" style="display: none;">
-        <h3>Results</h3>
-        <div id="summary"></div>
-        <div style="overflow-x: auto;">
-            <table id="resultsTable">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Gross</th>
-                        <th>Take-home</th>
-                        <th>%</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-        <button onclick="saveToDatabase()" id="saveBtn" style="margin-top: 20px; background-color: #6366f1;">Save to
-            History</button>
-        <p id="saveStatus" style="text-align: center; font-weight: bold; margin-top: 10px;"></p>
     </div>
 
     <script>
-        // --- PUT YOUR SUPABASE KEYS HERE ---
         const SUPABASE_URL = 'https://cuutpjofkllrmdeilgja.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1dXRwam9ma2xscm1kZWlsZ2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg4ODMsImV4cCI6MjA5MTIyNDg4M30.jskWv0hnsnjTIn6682q9CULdmJ5-a3jMEIBMGhKq9nQ';
+        const LOCAL_HISTORY_PREFIX = 'woltSplitterHistory';
 
-        const APP_PIN_STORAGE_KEY = 'woltSplitterPin';
-        const APP_HISTORY_STORAGE_KEY = 'woltSplitterHistory';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let supabaseClient = null;
-        const storedPin = localStorage.getItem(APP_PIN_STORAGE_KEY);
-        const userPin = storedPin || prompt("Enter your secret database PIN:");
-
-        if (userPin) {
-            localStorage.setItem(APP_PIN_STORAGE_KEY, userPin);
-        }
-
-        if (userPin) {
-            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-                global: { headers: { 'x-app-pin': userPin } }
-            });
-        }
-
+        let currentUser = null;
         let currentCalculationData = null;
+
+        function getLocalHistoryKey() {
+            return currentUser ? `${LOCAL_HISTORY_PREFIX}:${currentUser.id}` : LOCAL_HISTORY_PREFIX;
+        }
 
         function getLocalHistory() {
             try {
-                const raw = localStorage.getItem(APP_HISTORY_STORAGE_KEY);
+                const raw = localStorage.getItem(getLocalHistoryKey());
                 const parsed = raw ? JSON.parse(raw) : [];
                 return Array.isArray(parsed) ? parsed : [];
             } catch (error) {
@@ -367,24 +373,28 @@
             }
         }
 
-        function saveCalculationToLocalHistory(calculation) {
-            try {
-                const localHistory = getLocalHistory();
-                localHistory.unshift({
-                    ...calculation,
-                    created_at: new Date().toISOString()
-                });
-                localStorage.setItem(APP_HISTORY_STORAGE_KEY, JSON.stringify(localHistory));
-            } catch (error) {
-                console.error('Failed to save local history:', error);
-            }
+        function setLocalHistory(history) {
+            localStorage.setItem(getLocalHistoryKey(), JSON.stringify(history));
         }
 
-        function formatDateForInput(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
+        function prependLocalHistory(entry) {
+            const history = getLocalHistory();
+            const filtered = history.filter(item => item.id !== entry.id && item.created_at !== entry.created_at);
+            filtered.unshift(entry);
+            setLocalHistory(filtered);
+        }
+
+        function setStatus(elementId, message, type = 'info') {
+            const el = document.getElementById(elementId);
+            el.innerText = message;
+            el.className = `status ${type}`;
+            el.classList.remove('hidden');
+        }
+
+        function clearStatus(elementId) {
+            const el = document.getElementById(elementId);
+            el.innerText = '';
+            el.className = 'status info hidden';
         }
 
         function formatDisplayDate(dateString) {
@@ -393,185 +403,252 @@
         }
 
         function updatePeriodPreview() {
-            const selectedPeriod = document.getElementById('workPeriod').value;
             const preview = document.getElementById('periodPreview');
-
-            if (selectedPeriod !== 'Custom') {
-                preview.innerText = `Selected period: ${selectedPeriod}`;
-                return;
-            }
-
             const startDate = document.getElementById('customStartDate').value;
             const endDate = document.getElementById('customEndDate').value;
 
             if (startDate && endDate) {
                 preview.innerText = `Selected period: ${formatDisplayDate(startDate)} to ${formatDisplayDate(endDate)}`;
             } else if (startDate || endDate) {
-                preview.innerText = 'Selected period: choose both dates to complete the custom range';
+                preview.innerText = 'Selected period: choose both dates to complete the range';
             } else {
                 preview.innerText = 'Selected period: choose your custom date range';
             }
-        }
-
-        function setWorkPeriod(value) {
-            document.getElementById('workPeriod').value = value;
-            document.querySelectorAll('.period-card').forEach(card => {
-                card.classList.toggle('active', card.dataset.periodValue === value);
-            });
-            toggleCustomPeriod();
-            updatePeriodPreview();
-        }
-
-        function toggleCustomPeriod() {
-            const selectValue = document.getElementById('workPeriod').value;
-            const customContainer = document.getElementById('customPeriodContainer');
-            customContainer.classList.toggle('hidden', selectValue !== 'Custom');
-        }
-
-        function applyQuickRange(days) {
-            const endDate = new Date();
-            const startDate = new Date();
-            startDate.setDate(endDate.getDate() - (days - 1));
-            document.getElementById('customStartDate').value = formatDateForInput(startDate);
-            document.getElementById('customEndDate').value = formatDateForInput(endDate);
-            setWorkPeriod('Custom');
-        }
-
-        function applyCurrentMonthRange() {
-            const now = new Date();
-            const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            document.getElementById('customStartDate').value = formatDateForInput(startDate);
-            document.getElementById('customEndDate').value = formatDateForInput(now);
-            setWorkPeriod('Custom');
         }
 
         function addWorker() {
             const div = document.createElement('div');
             div.className = 'worker-row';
             div.innerHTML = `
-                <input type="text" placeholder="Name" class="w-name">
+                <input type="text" placeholder="Worker name" class="w-name">
                 <input type="number" placeholder="Gross (€)" class="w-gross" step="0.01">
-                <button class="btn-danger" onclick="this.parentElement.remove()">X</button>
+                <button class="btn-danger" type="button" onclick="removeWorker(this)">X</button>
             `;
             document.getElementById('workersList').appendChild(div);
         }
 
+        function removeWorker(button) {
+            const rows = document.querySelectorAll('.worker-row');
+            if (rows.length === 1) {
+                rows[0].querySelector('.w-name').value = '';
+                rows[0].querySelector('.w-gross').value = '';
+                return;
+            }
+            button.parentElement.remove();
+        }
+
         function calculate() {
-            const commissionPct = parseFloat(document.getElementById('commission').value) || 0;
-            const expenses = parseFloat(document.getElementById('expenses').value) || 0;
+            const startDate = document.getElementById('customStartDate').value;
+            const endDate = document.getElementById('customEndDate').value;
 
-            // Format the selected period
-            let selectedPeriod = document.getElementById('workPeriod').value;
-            if (selectedPeriod === 'Custom') {
-                const startDate = document.getElementById('customStartDate').value;
-                const endDate = document.getElementById('customEndDate').value;
-
-                if (startDate && endDate) {
-                    if (new Date(startDate) > new Date(endDate)) {
-                        return alert("Start date cannot be after end date.");
-                    }
-                    selectedPeriod = `${formatDisplayDate(startDate)} to ${formatDisplayDate(endDate)}`;
-                } else {
-                    return alert("Please select both custom dates.");
-                }
+            if (!startDate || !endDate) {
+                alert('Please select both start and end dates.');
+                return;
             }
 
+            if (new Date(startDate) > new Date(endDate)) {
+                alert('Start date cannot be after end date.');
+                return;
+            }
+
+            const selectedPeriod = `${formatDisplayDate(startDate)} to ${formatDisplayDate(endDate)}`;
+            const commissionPct = parseFloat(document.getElementById('commission').value) || 0;
+            const expenses = parseFloat(document.getElementById('expenses').value) || 0;
             const workerRows = document.querySelectorAll('.worker-row');
-            let workers = [];
+            const workers = [];
             let totalGross = 0;
 
             workerRows.forEach(row => {
-                const name = row.querySelector('.w-name').value || 'Unknown';
+                const name = row.querySelector('.w-name').value.trim() || 'Unknown';
                 const gross = parseFloat(row.querySelector('.w-gross').value) || 0;
-                if (gross > 0) { workers.push({ name, gross }); totalGross += gross; }
+                if (gross > 0) {
+                    workers.push({ name, gross });
+                    totalGross += gross;
+                }
             });
 
-            if (totalGross === 0) return alert("Total Gross must be greater than 0");
+            if (totalGross === 0) {
+                alert('Total gross must be greater than 0.');
+                return;
+            }
 
             const netIncome = totalGross - expenses;
             const ownerCut = netIncome * (commissionPct / 100);
             const workersPool = netIncome - ownerCut;
-
-            document.getElementById('resultsCard').style.display = 'block';
             const tbody = document.querySelector('#resultsTable tbody');
+
+            document.getElementById('resultsCard').classList.remove('hidden');
             tbody.innerHTML = '';
 
             document.getElementById('summary').innerHTML = `
-                <div class="summary-text" style="color: #6366f1; font-size: 0.9em; margin-bottom: 15px;">Period: ${selectedPeriod}</div>
-                <div class="summary-text">Total Gross: €${totalGross.toFixed(4)}</div>
-                <div class="summary-text">Expenses: €${expenses.toFixed(4)}</div>
-                <div class="summary-text" style="color: #ef4444;">Net Distributable: €${netIncome.toFixed(4)}</div>
+                <div class="summary-text" style="color: #6366f1;">Period: ${selectedPeriod}</div>
+                <div class="summary-text">Total Gross: €${totalGross.toFixed(2)}</div>
+                <div class="summary-text">Expenses: €${expenses.toFixed(2)}</div>
+                <div class="summary-text" style="color: #ef4444;">Net Distributable: €${netIncome.toFixed(2)}</div>
             `;
 
-            let workersDataForDB = [];
+            const workersDataForDB = [];
 
-            workers.forEach(w => {
-                let proportion = w.gross / totalGross;
-                let finalShare = workersPool * proportion;
-                let finalPct = (finalShare / totalGross) * 100;
-                workersDataForDB.push({ name: w.name, gross: w.gross, final_share: finalShare });
+            workers.forEach(worker => {
+                const proportion = worker.gross / totalGross;
+                const finalShare = workersPool * proportion;
+                const finalPct = (finalShare / totalGross) * 100;
+                workersDataForDB.push({ name: worker.name, gross: worker.gross, final_share: finalShare });
 
                 tbody.innerHTML += `
                     <tr>
-                        <td>${w.name}</td>
-                        <td>€${w.gross.toFixed(2)}</td>
-                        <td style="font-weight:bold;">€${finalShare.toFixed(2)}</td>
+                        <td>${worker.name}</td>
+                        <td>€${worker.gross.toFixed(2)}</td>
+                        <td style="font-weight: 700;">€${finalShare.toFixed(2)}</td>
                         <td>${finalPct.toFixed(1)}%</td>
                     </tr>
                 `;
             });
 
-            let ownerPct = (ownerCut / totalGross) * 100;
+            const ownerPct = (ownerCut / totalGross) * 100;
             tbody.innerHTML += `
-                <tr style="background-color: #f8fafc; font-weight: bold;">
+                <tr style="background-color: #f8fafc; font-weight: 700;">
                     <td>Owner</td>
                     <td>-</td>
-                    <td style="color:#00c2e8;">€${ownerCut.toFixed(2)}</td>
+                    <td style="color: #00c2e8;">€${ownerCut.toFixed(2)}</td>
                     <td>${ownerPct.toFixed(1)}%</td>
                 </tr>
             `;
 
             currentCalculationData = {
+                user_id: currentUser.id,
+                user_email: currentUser.email,
                 work_period: selectedPeriod,
                 total_gross: totalGross,
                 owner_cut: ownerCut,
-                expenses: expenses,
+                expenses,
                 workers_data: workersDataForDB
             };
 
-            document.getElementById('saveStatus').innerText = "";
+            clearStatus('saveStatus');
             document.getElementById('saveBtn').disabled = false;
-            document.getElementById('saveBtn').innerText = "Save to History";
+            document.getElementById('saveBtn').innerText = 'Save to History';
         }
 
         async function saveToDatabase() {
+            if (!currentUser) {
+                setStatus('saveStatus', 'Please log in first.', 'error');
+                return;
+            }
+
             if (!currentCalculationData) return;
-            if (!supabaseClient) return alert("Database connection not initialized.");
 
             const btn = document.getElementById('saveBtn');
-            btn.innerText = "Saving...";
+            btn.innerText = 'Saving...';
             btn.disabled = true;
+
+            const payload = {
+                ...currentCalculationData,
+                created_at: new Date().toISOString()
+            };
 
             const { data, error } = await supabaseClient
                 .from('wolt_splits')
-                .insert([currentCalculationData]);
+                .insert([payload])
+                .select('*')
+                .single();
 
             if (error) {
                 console.error('Error:', error);
-                saveCalculationToLocalHistory(currentCalculationData);
-                document.getElementById('saveStatus').innerText = "Saved locally. Database sync failed.";
-                document.getElementById('saveStatus').style.color = "#f59e0b";
-                btn.innerText = "Saved Locally";
+                prependLocalHistory({ ...payload, id: `local-${Date.now()}` });
+                setStatus('saveStatus', 'Saved locally. Run the SQL setup if database history is not ready yet.', 'info');
+                btn.innerText = 'Saved Locally';
+                return;
+            }
+
+            prependLocalHistory(data);
+            setStatus('saveStatus', 'Saved successfully.', 'success');
+            btn.innerText = 'Saved';
+        }
+
+        async function loginUser() {
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+
+            if (!email || !password) {
+                setStatus('authStatus', 'Enter both email and password.', 'error');
+                return;
+            }
+
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) {
+                setStatus('authStatus', error.message, 'error');
+                return;
+            }
+
+            clearStatus('authStatus');
+        }
+
+        async function signUpUser() {
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+
+            if (!email || !password) {
+                setStatus('authStatus', 'Enter both email and password.', 'error');
+                return;
+            }
+
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) {
+                setStatus('authStatus', error.message, 'error');
+                return;
+            }
+
+            if (data.user && !data.session) {
+                setStatus('authStatus', 'Account created. Check your email to confirm before logging in.', 'info');
             } else {
-                saveCalculationToLocalHistory(currentCalculationData);
-                document.getElementById('saveStatus').innerText = "Successfully saved to database!";
-                document.getElementById('saveStatus').style.color = "#10b981";
-                btn.innerText = "Saved";
+                setStatus('authStatus', 'Account created and logged in.', 'success');
             }
         }
 
-        toggleCustomPeriod();
+        async function logoutUser() {
+            await supabaseClient.auth.signOut();
+        }
+
+        function renderAuthState(user) {
+            currentUser = user || null;
+
+            const appShell = document.getElementById('appShell');
+            const authCard = document.getElementById('authCard');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const historyLink = document.getElementById('historyLink');
+            const userBadge = document.getElementById('userBadge');
+
+            if (currentUser) {
+                authCard.classList.add('hidden');
+                appShell.classList.remove('hidden');
+                logoutBtn.classList.remove('hidden');
+                historyLink.classList.remove('hidden');
+                userBadge.classList.remove('hidden');
+                userBadge.innerText = currentUser.email;
+            } else {
+                authCard.classList.remove('hidden');
+                appShell.classList.add('hidden');
+                logoutBtn.classList.add('hidden');
+                historyLink.classList.add('hidden');
+                userBadge.classList.add('hidden');
+                clearStatus('saveStatus');
+            }
+        }
+
+        async function initializeAuth() {
+            document.getElementById('logoutBtn').addEventListener('click', logoutUser);
+
+            const { data } = await supabaseClient.auth.getSession();
+            renderAuthState(data.session?.user || null);
+
+            supabaseClient.auth.onAuthStateChange((_event, session) => {
+                renderAuthState(session?.user || null);
+            });
+        }
+
         updatePeriodPreview();
+        initializeAuth();
     </script>
 </body>
 

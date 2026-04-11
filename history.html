@@ -4,15 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Wolt Analytics & History</title>
+    <title>Wolt History</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f0f4f8;
+            background: linear-gradient(180deg, #eef7fb 0%, #f8fafc 100%);
             color: #1a202c;
-            max-width: 900px;
+            max-width: 980px;
             margin: 0 auto;
             padding: 15px;
         }
@@ -20,29 +20,132 @@
         .card {
             background: #fff;
             padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
             margin-bottom: 20px;
         }
 
+        h1,
         h2 {
             margin-top: 0;
-            color: #00c2e8;
+            color: #00a8cc;
         }
 
-        .nav-link {
-            display: inline-block;
-            margin-bottom: 15px;
-            color: #6366f1;
+        .muted {
+            color: #64748b;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .nav-link,
+        button {
+            background: #00c2e8;
+            color: #fff;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 15px;
             text-decoration: none;
-            font-weight: bold;
+            display: inline-block;
+        }
+
+        .nav-link:hover,
+        button:hover {
+            background: #00a0c2;
+        }
+
+        .btn-secondary {
+            background: #64748b;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-success {
+            background: #10b981;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .auth-grid,
+        .modal-grid,
+        .stat-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .auth-grid,
+        .modal-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .stat-grid {
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #00c2e8;
+            margin-top: 5px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 0.92em;
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"],
+        input[type="number"],
+        input[type="datetime-local"] {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid #dbe3ee;
+            border-radius: 10px;
+            font-size: 15px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
-            font-size: 0.85em;
+            font-size: 0.88em;
         }
 
         th,
@@ -66,40 +169,25 @@
         th:nth-child(2) {
             text-align: left;
             color: #6366f1;
-            font-weight: bold;
+            font-weight: 700;
         }
 
-        .stat-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .stat-box {
-            background: #f8fafc;
-            padding: 15px;
-            border-radius: 8px;
+        .status {
+            margin-top: 12px;
+            font-weight: 700;
             text-align: center;
-            border: 1px solid #e2e8f0;
         }
 
-        .stat-value {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #00c2e8;
-            margin-top: 5px;
-        }
-
-        .error {
+        .status.error {
             color: #ef4444;
-            font-weight: bold;
-            text-align: center;
         }
 
-        .info {
+        .status.success {
+            color: #10b981;
+        }
+
+        .status.info {
             color: #64748b;
-            text-align: center;
         }
 
         .action-cell {
@@ -112,10 +200,6 @@
             padding: 8px 10px;
             border-radius: 8px;
             font-size: 0.8em;
-            font-weight: 700;
-            color: #fff;
-            border: none;
-            cursor: pointer;
         }
 
         .action-edit {
@@ -124,6 +208,16 @@
 
         .action-delete {
             background: #ef4444;
+        }
+
+        .user-badge {
+            padding: 10px 12px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 999px;
+            color: #1d4ed8;
+            font-weight: 700;
+            font-size: 0.9em;
         }
 
         .modal-backdrop {
@@ -148,32 +242,6 @@
             box-shadow: 0 25px 60px rgba(15, 23, 42, 0.28);
         }
 
-        .modal-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
-        }
-
-        .modal-field {
-            margin-bottom: 12px;
-        }
-
-        .modal-field label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            font-size: 0.9em;
-        }
-
-        .modal-field input {
-            width: 100%;
-            padding: 12px;
-            box-sizing: border-box;
-            border: 1px solid #cbd5e1;
-            border-radius: 10px;
-            font-size: 15px;
-        }
-
         .modal-actions {
             display: flex;
             gap: 10px;
@@ -184,15 +252,8 @@
             margin-bottom: 0;
         }
 
-        .btn-secondary {
-            background: #64748b;
-        }
-
-        .btn-success {
-            background: #10b981;
-        }
-
-        @media (max-width: 640px) {
+        @media (max-width: 700px) {
+            .auth-grid,
             .modal-grid {
                 grid-template-columns: 1fr;
             }
@@ -205,64 +266,97 @@
 </head>
 
 <body>
-
-    <a href="index.html" class="nav-link">← Back to Calculator</a>
-
     <div class="card">
-        <h2>Earnings Overview</h2>
-        <div class="stat-grid">
-            <div class="stat-box">
-                <div>Total Gross Ever</div>
-                <div class="stat-value" id="stat-gross">€0</div>
+        <div class="topbar">
+            <div>
+                <h1>History & Analytics</h1>
+                <p class="muted">Each logged-in user sees only their own saved periods.</p>
             </div>
-            <div class="stat-box">
-                <div>Total Owner Cut</div>
-                <div class="stat-value" id="stat-owner" style="color: #10b981;">€0</div>
+            <div class="top-actions">
+                <a href="index.html" class="nav-link">Back to Calculator</a>
+                <div class="user-badge hidden" id="userBadge"></div>
+                <button type="button" class="btn-secondary hidden" id="logoutBtn">Log Out</button>
             </div>
         </div>
-        <canvas id="earningsChart" width="400" height="200"></canvas>
     </div>
 
-    <div class="card" style="overflow-x: auto;">
-        <h2>History List</h2>
-        <p id="loadingText" style="text-align: center; color: #64748b;">Loading data securely...</p>
-        <p id="statusText" class="info" style="display: none;"></p>
-        <table id="historyTable" style="display: none;">
-            <thead>
-                <tr>
-                    <th>Saved On</th>
-                    <th>Work Period</th>
-                    <th>Gross</th>
-                    <th>Expenses</th>
-                    <th>Owner Cut</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+    <div class="card" id="authCard">
+        <h2>Login</h2>
+        <p class="muted">Sign in to view and manage your saved history.</p>
+        <div class="auth-grid">
+            <div>
+                <label for="authEmail">Email</label>
+                <input type="email" id="authEmail" placeholder="name@example.com" autocomplete="email">
+            </div>
+            <div>
+                <label for="authPassword">Password</label>
+                <input type="password" id="authPassword" placeholder="Your password" autocomplete="current-password">
+            </div>
+        </div>
+        <div class="top-actions" style="margin-top: 12px;">
+            <button type="button" onclick="loginUser()">Log In</button>
+            <button type="button" class="btn-secondary" onclick="signUpUser()">Create Account</button>
+        </div>
+        <p id="authStatus" class="status info hidden"></p>
+    </div>
+
+    <div id="historyShell" class="hidden">
+        <div class="card">
+            <h2>Earnings Overview</h2>
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div>Total Gross Ever</div>
+                    <div class="stat-value" id="stat-gross">€0</div>
+                </div>
+                <div class="stat-box">
+                    <div>Total Owner Cut</div>
+                    <div class="stat-value" id="stat-owner" style="color: #10b981;">€0</div>
+                </div>
+            </div>
+            <canvas id="earningsChart" width="400" height="200"></canvas>
+        </div>
+
+        <div class="card" style="overflow-x: auto;">
+            <h2>History List</h2>
+            <p id="loadingText" class="muted" style="text-align: center;">Loading your data...</p>
+            <p id="statusText" class="status info hidden"></p>
+            <table id="historyTable" class="hidden">
+                <thead>
+                    <tr>
+                        <th>Saved On</th>
+                        <th>Work Period</th>
+                        <th>Gross</th>
+                        <th>Expenses</th>
+                        <th>Owner Cut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 
     <div class="modal-backdrop" id="editModal">
         <div class="modal-card">
             <h2 style="font-size: 1.25em; margin-bottom: 16px;">Modify History Entry</h2>
-            <div class="modal-field">
+            <div>
                 <label for="editWorkPeriod">Work Period</label>
                 <input type="text" id="editWorkPeriod" placeholder="Apr 1, 2026 to Apr 15, 2026">
             </div>
-            <div class="modal-grid">
-                <div class="modal-field">
+            <div class="modal-grid" style="margin-top: 12px;">
+                <div>
                     <label for="editTotalGross">Gross (€)</label>
                     <input type="number" id="editTotalGross" step="0.01">
                 </div>
-                <div class="modal-field">
+                <div>
                     <label for="editExpenses">Expenses (€)</label>
                     <input type="number" id="editExpenses" step="0.01">
                 </div>
-                <div class="modal-field">
+                <div>
                     <label for="editOwnerCut">Owner Cut (€)</label>
                     <input type="number" id="editOwnerCut" step="0.01">
                 </div>
-                <div class="modal-field">
+                <div>
                     <label for="editCreatedAt">Saved On</label>
                     <input type="datetime-local" id="editCreatedAt">
                 </div>
@@ -271,34 +365,30 @@
                 <button class="btn-secondary" type="button" onclick="closeEditModal()">Cancel</button>
                 <button class="btn-success" type="button" onclick="saveEditedEntry()">Save Changes</button>
             </div>
-            <p id="editStatus" class="info" style="margin-top: 12px; display: none;"></p>
+            <p id="editStatus" class="status info hidden"></p>
         </div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://cuutpjofkllrmdeilgja.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1dXRwam9ma2xscm1kZWlsZ2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg4ODMsImV4cCI6MjA5MTIyNDg4M30.jskWv0hnsnjTIn6682q9CULdmJ5-a3jMEIBMGhKq9nQ';
-        const APP_PIN_STORAGE_KEY = 'woltSplitterPin';
-        const APP_HISTORY_STORAGE_KEY = 'woltSplitterHistory';
-        const storedPin = localStorage.getItem(APP_PIN_STORAGE_KEY);
-        const userPin = storedPin || prompt("Enter your secret database PIN to view history:");
+        const LOCAL_HISTORY_PREFIX = 'woltSplitterHistory';
 
-        let earningsChart = null;
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
         let currentHistoryData = [];
-        let currentDataSource = 'local';
+        let earningsChart = null;
         let editingIndex = null;
+        let currentDataSource = 'remote';
 
-        if (userPin) {
-            localStorage.setItem(APP_PIN_STORAGE_KEY, userPin);
+        function getLocalHistoryKey() {
+            return currentUser ? `${LOCAL_HISTORY_PREFIX}:${currentUser.id}` : LOCAL_HISTORY_PREFIX;
         }
-
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            global: { headers: { 'x-app-pin': userPin } }
-        });
 
         function getLocalHistory() {
             try {
-                const raw = localStorage.getItem(APP_HISTORY_STORAGE_KEY);
+                const raw = localStorage.getItem(getLocalHistoryKey());
                 const parsed = raw ? JSON.parse(raw) : [];
                 return Array.isArray(parsed) ? parsed : [];
             } catch (error) {
@@ -307,8 +397,21 @@
             }
         }
 
-        function setLocalHistory(entries) {
-            localStorage.setItem(APP_HISTORY_STORAGE_KEY, JSON.stringify(entries));
+        function setLocalHistory(history) {
+            localStorage.setItem(getLocalHistoryKey(), JSON.stringify(history));
+        }
+
+        function setStatus(elementId, message, type = 'info') {
+            const el = document.getElementById(elementId);
+            el.innerText = message;
+            el.className = `status ${type}`;
+            el.classList.remove('hidden');
+        }
+
+        function clearStatus(elementId) {
+            const el = document.getElementById(elementId);
+            el.innerText = '';
+            el.className = 'status info hidden';
         }
 
         function escapeHtml(value) {
@@ -330,81 +433,25 @@
             return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
 
-        function showStatus(message, isError = false) {
-            const statusText = document.getElementById('statusText');
-            statusText.innerText = message;
-            statusText.style.display = 'block';
-            statusText.style.color = isError ? '#ef4444' : '#64748b';
-        }
-
-        function showEditStatus(message, isError = false) {
-            const editStatus = document.getElementById('editStatus');
-            editStatus.innerText = message;
-            editStatus.style.display = 'block';
-            editStatus.style.color = isError ? '#ef4444' : '#64748b';
-        }
-
         function showNoData(message) {
             document.getElementById('loadingText').innerHTML = message;
             document.getElementById('loadingText').style.display = 'block';
-            document.getElementById('historyTable').style.display = 'none';
-        }
-
-        async function loadData() {
-            const localHistory = getLocalHistory();
-            let data = [];
-
-            if (userPin) {
-                const response = await supabaseClient
-                    .from('wolt_splits')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (!response.error && Array.isArray(response.data) && response.data.length > 0) {
-                    data = response.data;
-                    currentDataSource = 'remote';
-                } else if (localHistory.length > 0) {
-                    data = localHistory;
-                    currentDataSource = 'local';
-                    showStatus('Loaded local history because the database could not be reached.');
-                } else if (response.error) {
-                    showNoData('<span class="error">Could not load history from the database.</span>');
-                    showStatus(response.error.message || 'Unknown database error.', true);
-                    return;
-                }
-            } else if (localHistory.length > 0) {
-                data = localHistory;
-                currentDataSource = 'local';
-                showStatus('Loaded local history. Enter the PIN on the calculator page first if you want database sync.');
-            } else {
-                showNoData('<span class="error">PIN required.</span>');
-                return;
-            }
-
-            if (data.length === 0) {
-                showNoData('No history found.');
-                return;
-            }
-
-            currentHistoryData = [...data];
-            document.getElementById('loadingText').style.display = 'none';
-            document.getElementById('historyTable').style.display = 'table';
-            renderDashboard(currentHistoryData);
+            document.getElementById('historyTable').classList.add('hidden');
         }
 
         function renderDashboard(data) {
-            let totalGrossEver = 0;
-            let totalOwnerEver = 0;
-            const dates = [];
+            const tbody = document.querySelector('#historyTable tbody');
+            const labels = [];
             const grossData = [];
             const ownerData = [];
-            const tbody = document.querySelector('#historyTable tbody');
+            let totalGrossEver = 0;
+            let totalOwnerEver = 0;
 
             tbody.innerHTML = '';
 
             [...data].reverse().forEach(row => {
                 const dateObj = new Date(row.created_at);
-                dates.push(dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+                labels.push(dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
                 grossData.push(Number(row.total_gross) || 0);
                 ownerData.push(Number(row.owner_cut) || 0);
             });
@@ -412,19 +459,16 @@
             data.forEach((row, index) => {
                 totalGrossEver += Number(row.total_gross) || 0;
                 totalOwnerEver += Number(row.owner_cut) || 0;
-                const dateStr = new Date(row.created_at).toLocaleDateString();
-                const period = row.work_period || 'N/A';
-
                 tbody.innerHTML += `
                     <tr>
-                        <td>${escapeHtml(dateStr)}</td>
-                        <td>${escapeHtml(period)}</td>
+                        <td>${escapeHtml(new Date(row.created_at).toLocaleDateString())}</td>
+                        <td>${escapeHtml(row.work_period || 'N/A')}</td>
                         <td>€${(Number(row.total_gross) || 0).toFixed(2)}</td>
                         <td>€${(Number(row.expenses) || 0).toFixed(2)}</td>
-                        <td style="font-weight: bold; color: #10b981;">€${(Number(row.owner_cut) || 0).toFixed(2)}</td>
+                        <td style="font-weight: 700; color: #10b981;">€${(Number(row.owner_cut) || 0).toFixed(2)}</td>
                         <td class="action-cell">
-                            <button class="action-btn action-edit" onclick="openEditModal(${index})">Modify</button>
-                            <button class="action-btn action-delete" onclick="deleteHistoryEntry(${index})">Delete</button>
+                            <button class="action-btn action-edit" type="button" onclick="openEditModal(${index})">Modify</button>
+                            <button class="action-btn action-delete" type="button" onclick="deleteHistoryEntry(${index})">Delete</button>
                         </td>
                     </tr>
                 `;
@@ -432,16 +476,15 @@
 
             document.getElementById('stat-gross').innerText = `€${totalGrossEver.toFixed(2)}`;
             document.getElementById('stat-owner').innerText = `€${totalOwnerEver.toFixed(2)}`;
+            document.getElementById('loadingText').style.display = 'none';
+            document.getElementById('historyTable').classList.remove('hidden');
 
             const ctx = document.getElementById('earningsChart').getContext('2d');
-            if (earningsChart) {
-                earningsChart.destroy();
-            }
-
+            if (earningsChart) earningsChart.destroy();
             earningsChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: dates,
+                    labels,
                     datasets: [
                         { label: 'Total Gross (€)', data: grossData, borderColor: '#00c2e8', tension: 0.3, fill: false },
                         { label: 'Owner Cut (€)', data: ownerData, borderColor: '#10b981', tension: 0.3, fill: false }
@@ -449,6 +492,48 @@
                 },
                 options: { responsive: true }
             });
+        }
+
+        async function loadData() {
+            if (!currentUser) return;
+
+            document.getElementById('loadingText').style.display = 'block';
+            document.getElementById('loadingText').innerText = 'Loading your data...';
+            clearStatus('statusText');
+
+            const localHistory = getLocalHistory();
+            const response = await supabaseClient
+                .from('wolt_splits')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
+
+            if (!response.error) {
+                currentHistoryData = Array.isArray(response.data) ? response.data : [];
+                currentDataSource = 'remote';
+                setLocalHistory(currentHistoryData);
+            } else if (localHistory.length > 0) {
+                currentHistoryData = localHistory;
+                currentDataSource = 'local';
+                setStatus('statusText', 'Loaded local history because the database could not be reached.', 'info');
+            } else {
+                currentHistoryData = [];
+                currentDataSource = 'remote';
+                setStatus('statusText', response.error.message, 'error');
+            }
+
+            if (currentHistoryData.length === 0) {
+                document.getElementById('stat-gross').innerText = '€0';
+                document.getElementById('stat-owner').innerText = '€0';
+                if (earningsChart) {
+                    earningsChart.destroy();
+                    earningsChart = null;
+                }
+                showNoData('No history found yet.');
+                return;
+            }
+
+            renderDashboard(currentHistoryData);
         }
 
         function openEditModal(index) {
@@ -461,21 +546,13 @@
             document.getElementById('editExpenses').value = Number(entry.expenses || 0);
             document.getElementById('editOwnerCut').value = Number(entry.owner_cut || 0);
             document.getElementById('editCreatedAt').value = formatDateTimeLocal(entry.created_at || new Date().toISOString());
-            document.getElementById('editStatus').style.display = 'none';
+            clearStatus('editStatus');
             document.getElementById('editModal').classList.add('open');
         }
 
         function closeEditModal() {
             editingIndex = null;
             document.getElementById('editModal').classList.remove('open');
-            document.getElementById('editStatus').style.display = 'none';
-        }
-
-        function getRemoteRowFilter(entry) {
-            if (entry.id !== undefined && entry.id !== null) {
-                return { column: 'id', value: entry.id };
-            }
-            return null;
         }
 
         async function saveEditedEntry() {
@@ -483,7 +560,7 @@
 
             const savedOn = document.getElementById('editCreatedAt').value;
             if (!savedOn) {
-                showEditStatus('Please choose the saved date/time.', true);
+                setStatus('editStatus', 'Please choose the saved date and time.', 'error');
                 return;
             }
 
@@ -497,32 +574,25 @@
             };
 
             if (updatedEntry.total_gross <= 0) {
-                showEditStatus('Gross must be greater than 0.', true);
+                setStatus('editStatus', 'Gross must be greater than 0.', 'error');
                 return;
             }
 
-            if (currentDataSource === 'remote') {
-                const remoteFilter = getRemoteRowFilter(updatedEntry);
-                if (!remoteFilter) {
-                    showEditStatus('This row cannot be modified because no database id was found.', true);
-                    return;
-                }
-
-                const payload = {
-                    work_period: updatedEntry.work_period,
-                    total_gross: updatedEntry.total_gross,
-                    expenses: updatedEntry.expenses,
-                    owner_cut: updatedEntry.owner_cut,
-                    created_at: updatedEntry.created_at
-                };
-
+            if (currentDataSource === 'remote' && updatedEntry.id) {
                 const { error } = await supabaseClient
                     .from('wolt_splits')
-                    .update(payload)
-                    .eq(remoteFilter.column, remoteFilter.value);
+                    .update({
+                        work_period: updatedEntry.work_period,
+                        total_gross: updatedEntry.total_gross,
+                        expenses: updatedEntry.expenses,
+                        owner_cut: updatedEntry.owner_cut,
+                        created_at: updatedEntry.created_at
+                    })
+                    .eq('id', updatedEntry.id)
+                    .eq('user_id', currentUser.id);
 
                 if (error) {
-                    showEditStatus(error.message || 'Failed to update this history entry.', true);
+                    setStatus('editStatus', error.message, 'error');
                     return;
                 }
             }
@@ -530,8 +600,8 @@
             currentHistoryData[editingIndex] = updatedEntry;
             setLocalHistory(currentHistoryData);
             renderDashboard(currentHistoryData);
-            showStatus('History entry updated successfully.');
             closeEditModal();
+            setStatus('statusText', 'History entry updated successfully.', 'success');
         }
 
         async function deleteHistoryEntry(index) {
@@ -541,20 +611,15 @@
             const confirmed = confirm(`Delete the history entry for "${entry.work_period || 'this period'}"?`);
             if (!confirmed) return;
 
-            if (currentDataSource === 'remote') {
-                const remoteFilter = getRemoteRowFilter(entry);
-                if (!remoteFilter) {
-                    showStatus('This row cannot be deleted because no database id was found.', true);
-                    return;
-                }
-
+            if (currentDataSource === 'remote' && entry.id) {
                 const { error } = await supabaseClient
                     .from('wolt_splits')
                     .delete()
-                    .eq(remoteFilter.column, remoteFilter.value);
+                    .eq('id', entry.id)
+                    .eq('user_id', currentUser.id);
 
                 if (error) {
-                    showStatus(error.message || 'Failed to delete this history entry.', true);
+                    setStatus('statusText', error.message, 'error');
                     return;
                 }
             }
@@ -569,18 +634,93 @@
                     earningsChart.destroy();
                     earningsChart = null;
                 }
-                showNoData('No history found.');
-                showStatus('History entry deleted.');
+                showNoData('No history found yet.');
+            } else {
+                renderDashboard(currentHistoryData);
+            }
+
+            setStatus('statusText', 'History entry deleted.', 'success');
+        }
+
+        async function loginUser() {
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+
+            if (!email || !password) {
+                setStatus('authStatus', 'Enter both email and password.', 'error');
                 return;
             }
 
-            document.getElementById('loadingText').style.display = 'none';
-            document.getElementById('historyTable').style.display = 'table';
-            renderDashboard(currentHistoryData);
-            showStatus('History entry deleted.');
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) {
+                setStatus('authStatus', error.message, 'error');
+                return;
+            }
+
+            clearStatus('authStatus');
         }
 
-        window.onload = loadData;
+        async function signUpUser() {
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+
+            if (!email || !password) {
+                setStatus('authStatus', 'Enter both email and password.', 'error');
+                return;
+            }
+
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) {
+                setStatus('authStatus', error.message, 'error');
+                return;
+            }
+
+            if (data.user && !data.session) {
+                setStatus('authStatus', 'Account created. Check your email to confirm before logging in.', 'info');
+            } else {
+                setStatus('authStatus', 'Account created and logged in.', 'success');
+            }
+        }
+
+        async function logoutUser() {
+            await supabaseClient.auth.signOut();
+        }
+
+        function renderAuthState(user) {
+            currentUser = user || null;
+
+            const authCard = document.getElementById('authCard');
+            const historyShell = document.getElementById('historyShell');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const userBadge = document.getElementById('userBadge');
+
+            if (currentUser) {
+                authCard.classList.add('hidden');
+                historyShell.classList.remove('hidden');
+                logoutBtn.classList.remove('hidden');
+                userBadge.classList.remove('hidden');
+                userBadge.innerText = currentUser.email;
+                loadData();
+            } else {
+                authCard.classList.remove('hidden');
+                historyShell.classList.add('hidden');
+                logoutBtn.classList.add('hidden');
+                userBadge.classList.add('hidden');
+            }
+        }
+
+        async function initializeAuth() {
+            document.getElementById('logoutBtn').addEventListener('click', logoutUser);
+
+            const { data } = await supabaseClient.auth.getSession();
+            renderAuthState(data.session?.user || null);
+
+            supabaseClient.auth.onAuthStateChange((_event, session) => {
+                renderAuthState(session?.user || null);
+            });
+        }
+
+        initializeAuth();
     </script>
 </body>
 
