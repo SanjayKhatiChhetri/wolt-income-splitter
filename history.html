@@ -101,6 +101,106 @@
             color: #64748b;
             text-align: center;
         }
+
+        .action-cell {
+            white-space: nowrap;
+        }
+
+        .action-btn {
+            width: auto;
+            margin: 0 0 0 6px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            font-weight: 700;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        .action-edit {
+            background: #6366f1;
+        }
+
+        .action-delete {
+            background: #ef4444;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal-card {
+            width: min(100%, 520px);
+            background: #fff;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 25px 60px rgba(15, 23, 42, 0.28);
+        }
+
+        .modal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .modal-field {
+            margin-bottom: 12px;
+        }
+
+        .modal-field label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .modal-field input {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 15px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .modal-actions button {
+            margin-bottom: 0;
+        }
+
+        .btn-secondary {
+            background: #64748b;
+        }
+
+        .btn-success {
+            background: #10b981;
+        }
+
+        @media (max-width: 640px) {
+            .modal-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-cell {
+                min-width: 145px;
+            }
+        }
     </style>
 </head>
 
@@ -135,10 +235,44 @@
                     <th>Gross</th>
                     <th>Expenses</th>
                     <th>Owner Cut</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
+    </div>
+
+    <div class="modal-backdrop" id="editModal">
+        <div class="modal-card">
+            <h2 style="font-size: 1.25em; margin-bottom: 16px;">Modify History Entry</h2>
+            <div class="modal-field">
+                <label for="editWorkPeriod">Work Period</label>
+                <input type="text" id="editWorkPeriod" placeholder="Apr 1, 2026 to Apr 15, 2026">
+            </div>
+            <div class="modal-grid">
+                <div class="modal-field">
+                    <label for="editTotalGross">Gross (€)</label>
+                    <input type="number" id="editTotalGross" step="0.01">
+                </div>
+                <div class="modal-field">
+                    <label for="editExpenses">Expenses (€)</label>
+                    <input type="number" id="editExpenses" step="0.01">
+                </div>
+                <div class="modal-field">
+                    <label for="editOwnerCut">Owner Cut (€)</label>
+                    <input type="number" id="editOwnerCut" step="0.01">
+                </div>
+                <div class="modal-field">
+                    <label for="editCreatedAt">Saved On</label>
+                    <input type="datetime-local" id="editCreatedAt">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" type="button" onclick="closeEditModal()">Cancel</button>
+                <button class="btn-success" type="button" onclick="saveEditedEntry()">Save Changes</button>
+            </div>
+            <p id="editStatus" class="info" style="margin-top: 12px; display: none;"></p>
+        </div>
     </div>
 
     <script>
@@ -148,7 +282,11 @@
         const APP_HISTORY_STORAGE_KEY = 'woltSplitterHistory';
         const storedPin = localStorage.getItem(APP_PIN_STORAGE_KEY);
         const userPin = storedPin || prompt("Enter your secret database PIN to view history:");
+
         let earningsChart = null;
+        let currentHistoryData = [];
+        let currentDataSource = 'local';
+        let editingIndex = null;
 
         if (userPin) {
             localStorage.setItem(APP_PIN_STORAGE_KEY, userPin);
@@ -169,6 +307,29 @@
             }
         }
 
+        function setLocalHistory(entries) {
+            localStorage.setItem(APP_HISTORY_STORAGE_KEY, JSON.stringify(entries));
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatDateTimeLocal(dateString) {
+            const date = new Date(dateString);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
         function showStatus(message, isError = false) {
             const statusText = document.getElementById('statusText');
             statusText.innerText = message;
@@ -176,8 +337,16 @@
             statusText.style.color = isError ? '#ef4444' : '#64748b';
         }
 
+        function showEditStatus(message, isError = false) {
+            const editStatus = document.getElementById('editStatus');
+            editStatus.innerText = message;
+            editStatus.style.display = 'block';
+            editStatus.style.color = isError ? '#ef4444' : '#64748b';
+        }
+
         function showNoData(message) {
             document.getElementById('loadingText').innerHTML = message;
+            document.getElementById('loadingText').style.display = 'block';
             document.getElementById('historyTable').style.display = 'none';
         }
 
@@ -193,8 +362,10 @@
 
                 if (!response.error && Array.isArray(response.data) && response.data.length > 0) {
                     data = response.data;
+                    currentDataSource = 'remote';
                 } else if (localHistory.length > 0) {
                     data = localHistory;
+                    currentDataSource = 'local';
                     showStatus('Loaded local history because the database could not be reached.');
                 } else if (response.error) {
                     showNoData('<span class="error">Could not load history from the database.</span>');
@@ -203,6 +374,7 @@
                 }
             } else if (localHistory.length > 0) {
                 data = localHistory;
+                currentDataSource = 'local';
                 showStatus('Loaded local history. Enter the PIN on the calculator page first if you want database sync.');
             } else {
                 showNoData('<span class="error">PIN required.</span>');
@@ -210,13 +382,14 @@
             }
 
             if (data.length === 0) {
-                showNoData("No history found.");
+                showNoData('No history found.');
                 return;
             }
 
+            currentHistoryData = [...data];
             document.getElementById('loadingText').style.display = 'none';
             document.getElementById('historyTable').style.display = 'table';
-            renderDashboard(data);
+            renderDashboard(currentHistoryData);
         }
 
         function renderDashboard(data) {
@@ -226,30 +399,33 @@
             const grossData = [];
             const ownerData = [];
             const tbody = document.querySelector('#historyTable tbody');
+
             tbody.innerHTML = '';
 
-            const chartData = [...data].reverse();
-
-            chartData.forEach(row => {
+            [...data].reverse().forEach(row => {
                 const dateObj = new Date(row.created_at);
                 dates.push(dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
-                grossData.push(row.total_gross);
-                ownerData.push(row.owner_cut);
+                grossData.push(Number(row.total_gross) || 0);
+                ownerData.push(Number(row.owner_cut) || 0);
             });
 
-            data.forEach(row => {
-                totalGrossEver += parseFloat(row.total_gross);
-                totalOwnerEver += parseFloat(row.owner_cut);
+            data.forEach((row, index) => {
+                totalGrossEver += Number(row.total_gross) || 0;
+                totalOwnerEver += Number(row.owner_cut) || 0;
                 const dateStr = new Date(row.created_at).toLocaleDateString();
-                const period = row.work_period || 'N/A'; // Shows N/A for old entries without a period
+                const period = row.work_period || 'N/A';
 
                 tbody.innerHTML += `
                     <tr>
-                        <td>${dateStr}</td>
-                        <td>${period}</td>
-                        <td>€${parseFloat(row.total_gross).toFixed(2)}</td>
-                        <td>€${parseFloat(row.expenses).toFixed(2)}</td>
-                        <td style="font-weight: bold; color: #10b981;">€${parseFloat(row.owner_cut).toFixed(2)}</td>
+                        <td>${escapeHtml(dateStr)}</td>
+                        <td>${escapeHtml(period)}</td>
+                        <td>€${(Number(row.total_gross) || 0).toFixed(2)}</td>
+                        <td>€${(Number(row.expenses) || 0).toFixed(2)}</td>
+                        <td style="font-weight: bold; color: #10b981;">€${(Number(row.owner_cut) || 0).toFixed(2)}</td>
+                        <td class="action-cell">
+                            <button class="action-btn action-edit" onclick="openEditModal(${index})">Modify</button>
+                            <button class="action-btn action-delete" onclick="deleteHistoryEntry(${index})">Delete</button>
+                        </td>
                     </tr>
                 `;
             });
@@ -273,6 +449,135 @@
                 },
                 options: { responsive: true }
             });
+        }
+
+        function openEditModal(index) {
+            const entry = currentHistoryData[index];
+            if (!entry) return;
+
+            editingIndex = index;
+            document.getElementById('editWorkPeriod').value = entry.work_period || '';
+            document.getElementById('editTotalGross').value = Number(entry.total_gross || 0);
+            document.getElementById('editExpenses').value = Number(entry.expenses || 0);
+            document.getElementById('editOwnerCut').value = Number(entry.owner_cut || 0);
+            document.getElementById('editCreatedAt').value = formatDateTimeLocal(entry.created_at || new Date().toISOString());
+            document.getElementById('editStatus').style.display = 'none';
+            document.getElementById('editModal').classList.add('open');
+        }
+
+        function closeEditModal() {
+            editingIndex = null;
+            document.getElementById('editModal').classList.remove('open');
+            document.getElementById('editStatus').style.display = 'none';
+        }
+
+        function getRemoteRowFilter(entry) {
+            if (entry.id !== undefined && entry.id !== null) {
+                return { column: 'id', value: entry.id };
+            }
+            return null;
+        }
+
+        async function saveEditedEntry() {
+            if (editingIndex === null) return;
+
+            const savedOn = document.getElementById('editCreatedAt').value;
+            if (!savedOn) {
+                showEditStatus('Please choose the saved date/time.', true);
+                return;
+            }
+
+            const updatedEntry = {
+                ...currentHistoryData[editingIndex],
+                work_period: document.getElementById('editWorkPeriod').value.trim() || 'N/A',
+                total_gross: parseFloat(document.getElementById('editTotalGross').value) || 0,
+                expenses: parseFloat(document.getElementById('editExpenses').value) || 0,
+                owner_cut: parseFloat(document.getElementById('editOwnerCut').value) || 0,
+                created_at: new Date(savedOn).toISOString()
+            };
+
+            if (updatedEntry.total_gross <= 0) {
+                showEditStatus('Gross must be greater than 0.', true);
+                return;
+            }
+
+            if (currentDataSource === 'remote') {
+                const remoteFilter = getRemoteRowFilter(updatedEntry);
+                if (!remoteFilter) {
+                    showEditStatus('This row cannot be modified because no database id was found.', true);
+                    return;
+                }
+
+                const payload = {
+                    work_period: updatedEntry.work_period,
+                    total_gross: updatedEntry.total_gross,
+                    expenses: updatedEntry.expenses,
+                    owner_cut: updatedEntry.owner_cut,
+                    created_at: updatedEntry.created_at
+                };
+
+                const { error } = await supabaseClient
+                    .from('wolt_splits')
+                    .update(payload)
+                    .eq(remoteFilter.column, remoteFilter.value);
+
+                if (error) {
+                    showEditStatus(error.message || 'Failed to update this history entry.', true);
+                    return;
+                }
+            }
+
+            currentHistoryData[editingIndex] = updatedEntry;
+            setLocalHistory(currentHistoryData);
+            renderDashboard(currentHistoryData);
+            showStatus('History entry updated successfully.');
+            closeEditModal();
+        }
+
+        async function deleteHistoryEntry(index) {
+            const entry = currentHistoryData[index];
+            if (!entry) return;
+
+            const confirmed = confirm(`Delete the history entry for "${entry.work_period || 'this period'}"?`);
+            if (!confirmed) return;
+
+            if (currentDataSource === 'remote') {
+                const remoteFilter = getRemoteRowFilter(entry);
+                if (!remoteFilter) {
+                    showStatus('This row cannot be deleted because no database id was found.', true);
+                    return;
+                }
+
+                const { error } = await supabaseClient
+                    .from('wolt_splits')
+                    .delete()
+                    .eq(remoteFilter.column, remoteFilter.value);
+
+                if (error) {
+                    showStatus(error.message || 'Failed to delete this history entry.', true);
+                    return;
+                }
+            }
+
+            currentHistoryData.splice(index, 1);
+            setLocalHistory(currentHistoryData);
+
+            if (currentHistoryData.length === 0) {
+                document.getElementById('stat-gross').innerText = '€0';
+                document.getElementById('stat-owner').innerText = '€0';
+                if (earningsChart) {
+                    earningsChart.destroy();
+                    earningsChart = null;
+                }
+                showNoData('No history found.');
+                showStatus('History entry deleted.');
+                return;
+            }
+
+            document.getElementById('loadingText').style.display = 'none';
+            document.getElementById('historyTable').style.display = 'table';
+            renderDashboard(currentHistoryData);
+            showStatus('History entry deleted.');
         }
 
         window.onload = loadData;
