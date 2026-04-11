@@ -151,6 +151,84 @@
             text-decoration: none;
             font-weight: bold;
         }
+
+        .period-panel {
+            border: 1px solid #dbeafe;
+            background: linear-gradient(180deg, #f8fbff 0%, #eef8ff 100%);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .period-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+
+        .period-card {
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 12px;
+            background: #ffffff;
+            cursor: pointer;
+            transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .period-card.active {
+            border-color: #00c2e8;
+            box-shadow: 0 8px 20px rgba(0, 194, 232, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .period-card-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .period-card-text {
+            color: #64748b;
+            font-size: 0.85em;
+        }
+
+        .quick-range-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .quick-range-btn {
+            width: auto;
+            margin-bottom: 0;
+            padding: 8px 12px;
+            font-size: 0.85em;
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .quick-range-btn:hover {
+            background: #cbd5e1;
+        }
+
+        .period-preview {
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #ffffff;
+            border: 1px dashed #94a3b8;
+            color: #334155;
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 640px) {
+            .flex-row {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 
@@ -163,23 +241,43 @@
 
         <div class="input-group">
             <label>Work Period</label>
-            <select id="workPeriod" onchange="toggleCustomPeriod()" style="margin-bottom: 10px;">
-                <option value="1st - 15th (Payday: 25th)">1st - 15th (Payday: 25th)</option>
-                <option value="16th - End of Month (Payday: 10th)">16th - End of Month (Payday: 10th)</option>
-                <option value="Custom">Custom Dates</option>
-            </select>
-
-            <div id="customPeriodContainer" style="display: none; margin-top: 10px;">
-                <div class="flex-row">
-                    <div style="flex: 1;">
-                        <div class="sub-label">Start Date</div>
-                        <input type="date" id="customStartDate">
+            <input type="hidden" id="workPeriod" value="1st - 15th (Payday: 25th)">
+            <div class="period-panel">
+                <div class="period-grid">
+                    <div class="period-card active" data-period-value="1st - 15th (Payday: 25th)" onclick="setWorkPeriod('1st - 15th (Payday: 25th)')">
+                        <div class="period-card-title">1st - 15th</div>
+                        <div class="period-card-text">Standard first-half payroll period</div>
                     </div>
-                    <div style="flex: 1;">
-                        <div class="sub-label">End Date</div>
-                        <input type="date" id="customEndDate">
+                    <div class="period-card" data-period-value="16th - End of Month (Payday: 10th)" onclick="setWorkPeriod('16th - End of Month (Payday: 10th)')">
+                        <div class="period-card-title">16th - End of Month</div>
+                        <div class="period-card-text">Standard second-half payroll period</div>
+                    </div>
+                    <div class="period-card" data-period-value="Custom" onclick="setWorkPeriod('Custom')">
+                        <div class="period-card-title">Custom Range</div>
+                        <div class="period-card-text">Pick any start and end dates</div>
                     </div>
                 </div>
+
+                <div id="customPeriodContainer" class="hidden" style="margin-top: 12px;">
+                    <div class="flex-row">
+                        <div style="flex: 1;">
+                            <div class="sub-label">Start Date</div>
+                            <input type="date" id="customStartDate" onchange="updatePeriodPreview()">
+                        </div>
+                        <div style="flex: 1;">
+                        <div class="sub-label">End Date</div>
+                            <input type="date" id="customEndDate" onchange="updatePeriodPreview()">
+                        </div>
+                    </div>
+
+                    <div class="quick-range-row">
+                        <button type="button" class="quick-range-btn" onclick="applyQuickRange(7)">Last 7 Days</button>
+                        <button type="button" class="quick-range-btn" onclick="applyQuickRange(14)">Last 14 Days</button>
+                        <button type="button" class="quick-range-btn" onclick="applyCurrentMonthRange()">This Month</button>
+                    </div>
+                </div>
+
+                <div class="period-preview" id="periodPreview">Selected period: 1st - 15th (Payday: 25th)</div>
             </div>
         </div>
 
@@ -282,15 +380,69 @@
             }
         }
 
-        // Toggle Date Pickers
-        function toggleCustomPeriod() {
-            const select = document.getElementById('workPeriod');
-            const customContainer = document.getElementById('customPeriodContainer');
-            if (select.value === 'Custom') {
-                customContainer.style.display = 'block';
-            } else {
-                customContainer.style.display = 'none';
+        function formatDateForInput(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function formatDisplayDate(dateString) {
+            const date = new Date(`${dateString}T00:00:00`);
+            return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function updatePeriodPreview() {
+            const selectedPeriod = document.getElementById('workPeriod').value;
+            const preview = document.getElementById('periodPreview');
+
+            if (selectedPeriod !== 'Custom') {
+                preview.innerText = `Selected period: ${selectedPeriod}`;
+                return;
             }
+
+            const startDate = document.getElementById('customStartDate').value;
+            const endDate = document.getElementById('customEndDate').value;
+
+            if (startDate && endDate) {
+                preview.innerText = `Selected period: ${formatDisplayDate(startDate)} to ${formatDisplayDate(endDate)}`;
+            } else if (startDate || endDate) {
+                preview.innerText = 'Selected period: choose both dates to complete the custom range';
+            } else {
+                preview.innerText = 'Selected period: choose your custom date range';
+            }
+        }
+
+        function setWorkPeriod(value) {
+            document.getElementById('workPeriod').value = value;
+            document.querySelectorAll('.period-card').forEach(card => {
+                card.classList.toggle('active', card.dataset.periodValue === value);
+            });
+            toggleCustomPeriod();
+            updatePeriodPreview();
+        }
+
+        function toggleCustomPeriod() {
+            const selectValue = document.getElementById('workPeriod').value;
+            const customContainer = document.getElementById('customPeriodContainer');
+            customContainer.classList.toggle('hidden', selectValue !== 'Custom');
+        }
+
+        function applyQuickRange(days) {
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(endDate.getDate() - (days - 1));
+            document.getElementById('customStartDate').value = formatDateForInput(startDate);
+            document.getElementById('customEndDate').value = formatDateForInput(endDate);
+            setWorkPeriod('Custom');
+        }
+
+        function applyCurrentMonthRange() {
+            const now = new Date();
+            const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            document.getElementById('customStartDate').value = formatDateForInput(startDate);
+            document.getElementById('customEndDate').value = formatDateForInput(now);
+            setWorkPeriod('Custom');
         }
 
         function addWorker() {
@@ -315,9 +467,12 @@
                 const endDate = document.getElementById('customEndDate').value;
 
                 if (startDate && endDate) {
-                    selectedPeriod = `${startDate} to ${endDate}`;
+                    if (new Date(startDate) > new Date(endDate)) {
+                        return alert("Start date cannot be after end date.");
+                    }
+                    selectedPeriod = `${formatDisplayDate(startDate)} to ${formatDisplayDate(endDate)}`;
                 } else {
-                    selectedPeriod = 'Custom Dates (Not fully selected)';
+                    return alert("Please select both custom dates.");
                 }
             }
 
@@ -414,6 +569,9 @@
                 btn.innerText = "Saved";
             }
         }
+
+        toggleCustomPeriod();
+        updatePeriodPreview();
     </script>
 </body>
 
