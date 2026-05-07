@@ -1,8 +1,9 @@
-const CACHE_NAME = 'wolt-income-splitter-v1';
+const CACHE_NAME = 'wolt-income-splitter-v2';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
     '/history.html',
+    '/reset-password.html',
     '/manifest.json',
     '/app-icon.svg'
 ];
