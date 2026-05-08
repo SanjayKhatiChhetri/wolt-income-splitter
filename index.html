@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#00c2e8">
+    <meta name="theme-color" content="#cc785c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="manifest" href="manifest.json">
@@ -12,11 +12,12 @@
     <link rel="apple-touch-icon" href="app-icon.svg">
     <title>Wolt Income Splitter</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: linear-gradient(180deg, #eef7fb 0%, #f8fafc 100%);
-            color: #1a202c;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #faf9f5;
+            color: #3d3d3a;
             max-width: 860px;
             margin: 0 auto;
             padding: 15px;
@@ -25,16 +26,24 @@
         .card {
             background: #fff;
             padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(20,20,19,0.08);
             margin-bottom: 20px;
         }
 
-        h1,
-        h2,
+        h1, h2 {
+            margin-top: 0;
+            color: #141413;
+            font-family: "Cormorant Garamond", "Times New Roman", serif;
+            font-weight: 400;
+            letter-spacing: -0.5px;
+        }
+
         h3 {
             margin-top: 0;
-            color: #00a8cc;
+            color: #141413;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-weight: 500;
         }
 
         p {
@@ -56,55 +65,55 @@
             width: 100%;
             padding: 12px;
             box-sizing: border-box;
-            border: 1px solid #dbe3ee;
-            border-radius: 10px;
+            border: 1px solid #e6dfd8;
+            border-radius: 8px;
             font-size: 16px;
             background: #fff;
         }
 
         button,
         .nav-link {
-            background: #00c2e8;
+            background: #cc785c;
             color: #fff;
             border: none;
             padding: 12px 15px;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 700;
-            font-size: 15px;
+            font-size: 14px;
             text-decoration: none;
             display: inline-block;
         }
 
         button:hover,
         .nav-link:hover {
-            background: #00a0c2;
+            background: #a9583e;
         }
 
         .btn-secondary {
-            background: #64748b;
+            background: #3d3d3a;
         }
 
         .btn-secondary:hover {
-            background: #475569;
+            background: #252523;
         }
 
         .btn-success {
-            background: #10b981;
+            background: #5db872;
         }
 
         .btn-success:hover {
-            background: #059669;
+            background: #4a9d5f;
         }
 
         .btn-danger {
-            background: #ef4444;
+            background: #c64545;
             width: auto;
             padding: 12px;
         }
 
         .btn-danger:hover {
-            background: #dc2626;
+            background: #a83838;
         }
 
         .hero {
@@ -120,7 +129,7 @@
         }
 
         .muted {
-            color: #64748b;
+            color: #6c6a64;
         }
 
         .status {
@@ -130,15 +139,15 @@
         }
 
         .status.error {
-            color: #ef4444;
+            color: #c64545;
         }
 
         .status.success {
-            color: #10b981;
+            color: #5db872;
         }
 
         .status.info {
-            color: #64748b;
+            color: #6c6a64;
         }
 
         .hidden {
@@ -162,19 +171,19 @@
         }
 
         .period-panel {
-            border: 1px solid #dbeafe;
-            background: linear-gradient(180deg, #f8fbff 0%, #eef8ff 100%);
-            border-radius: 14px;
+            border: 1px solid #e6dfd8;
+            background: #f5f0e8;
+            border-radius: 12px;
             padding: 16px;
         }
 
         .period-preview {
             margin-top: 12px;
             padding: 10px 12px;
-            border-radius: 10px;
+            border-radius: 8px;
             background: #fff;
-            border: 1px dashed #94a3b8;
-            color: #334155;
+            border: 1px dashed #8e8b82;
+            color: #252523;
             font-weight: 600;
         }
 
@@ -200,13 +209,13 @@
 
         th,
         td {
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e6dfd8;
             padding: 12px 8px;
             text-align: right;
         }
 
         th {
-            color: #64748b;
+            color: #6c6a64;
             font-weight: 600;
         }
 
@@ -234,8 +243,8 @@
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            background: #ecfeff;
-            border: 1px solid #a5f3fc;
+            background: #f5f0e8;
+            border: 1px solid #e6dfd8;
             border-radius: 12px;
             padding: 12px 14px;
             margin-bottom: 20px;
@@ -243,10 +252,10 @@
 
         .user-badge {
             padding: 10px 12px;
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
+            background: #f5f0e8;
+            border: 1px solid #e6dfd8;
             border-radius: 999px;
-            color: #1d4ed8;
+            color: #cc785c;
             font-weight: 700;
             font-size: 0.9em;
         }
@@ -306,7 +315,7 @@
             <button type="button" onclick="loginUser()">Log In</button>
             <button type="button" class="btn-secondary" onclick="signUpUser()">Create Account</button>
         </div>
-        <p style="margin-top: 10px; text-align: center;"><a href="#" onclick="forgotPassword(); return false;" style="color: #00a8cc; font-size: 0.9em;">Forgot Password?</a></p>
+        <p style="margin-top: 10px; text-align: center;"><a href="#" onclick="forgotPassword(); return false;" style="color: #cc785c; font-size: 0.9em;">Forgot Password?</a></p>
         <p id="authStatus" class="status info hidden"></p>
     </div>
 
@@ -375,7 +384,7 @@
                     <tbody></tbody>
                 </table>
             </div>
-            <button type="button" onclick="saveToDatabase()" id="saveBtn" style="margin-top: 20px; background-color: #6366f1;">Save to History</button>
+            <button type="button" onclick="saveToDatabase()" id="saveBtn" style="margin-top: 20px; background-color: #cc785c;">Save to History</button>
             <p id="saveStatus" class="status info hidden"></p>
         </div>
     </div>
@@ -519,11 +528,11 @@
             tbody.innerHTML = '';
 
             document.getElementById('summary').innerHTML = `
-                <div class="summary-text" style="color: #6366f1;">Period: ${selectedPeriod}</div>
+                <div class="summary-text" style="color: #cc785c;">Period: ${selectedPeriod}</div>
                 <div class="summary-text">Total Gross: €${totalGross.toFixed(2)}</div>
                 <div class="summary-text">Expenses: €${expenses.toFixed(2)}</div>
                 <div class="summary-text">Owner: ${ownerName}</div>
-                <div class="summary-text" style="color: #ef4444;">Net Distributable: €${netIncome.toFixed(2)}</div>
+                <div class="summary-text" style="color: #c64545;">Net Distributable: €${netIncome.toFixed(2)}</div>
             `;
 
             const workersDataForDB = [];
@@ -546,10 +555,10 @@
 
             const ownerPct = (ownerCut / totalGross) * 100;
             tbody.innerHTML += `
-                <tr style="background-color: #f8fafc; font-weight: 700;">
+                <tr style="background-color: #f5f0e8; font-weight: 700;">
                     <td>${ownerName}</td>
                     <td>-</td>
-                    <td style="color: #00c2e8;">€${ownerCut.toFixed(2)}</td>
+                    <td style="color: #cc785c;">€${ownerCut.toFixed(2)}</td>
                     <td>${ownerPct.toFixed(1)}%</td>
                 </tr>
             `;
