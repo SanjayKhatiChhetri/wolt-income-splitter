@@ -197,7 +197,12 @@
 
         .worker-row input {
             flex: 1;
-            min-width: 120px;
+            min-width: 100px;
+        }
+
+        .worker-row .w-commission {
+            max-width: 100px;
+            min-width: 80px;
         }
 
         table {
@@ -345,7 +350,7 @@
                     <input type="text" id="ownerName" value="Owner" placeholder="Your name">
                 </div>
                 <div class="input-group" style="flex: 1;">
-                    <label for="commission">Owner Cut (%)</label>
+                    <label for="commission">Default Owner %</label>
                     <input type="number" id="commission" value="25" step="0.1">
                 </div>
                 <div class="input-group" style="flex: 1;">
@@ -361,6 +366,7 @@
                 <div class="worker-row">
                     <input type="text" placeholder="Worker name" class="w-name">
                     <input type="number" placeholder="Gross (€)" class="w-gross" step="0.01">
+                    <input type="number" placeholder="Owner %" class="w-commission" step="0.1" value="25">
                     <button class="btn-danger" type="button" onclick="removeWorker(this)">X</button>
                 </div>
             </div>
@@ -378,7 +384,8 @@
                             <th>Name</th>
                             <th>Gross</th>
                             <th>Take-home</th>
-                            <th>%</th>
+                            <th>Owner %</th>
+                            <th>Share %</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -463,11 +470,13 @@
         }
 
         function addWorker() {
+            const defaultPct = document.getElementById('commission').value || '25';
             const div = document.createElement('div');
             div.className = 'worker-row';
             div.innerHTML = `
                 <input type="text" placeholder="Worker name" class="w-name">
                 <input type="number" placeholder="Gross (€)" class="w-gross" step="0.01">
+                <input type="number" placeholder="Owner %" class="w-commission" step="0.1" value="${defaultPct}">
                 <button class="btn-danger" type="button" onclick="removeWorker(this)">X</button>
             `;
             document.getElementById('workersList').appendChild(div);
@@ -478,6 +487,7 @@
             if (rows.length === 1) {
                 rows[0].querySelector('.w-name').value = '';
                 rows[0].querySelector('.w-gross').value = '';
+                rows[0].querySelector('.w-commission').value = document.getElementById('commission').value || '25';
                 return;
             }
             button.parentElement.remove();
@@ -499,7 +509,6 @@
 
             const selectedPeriod = `${formatDisplayDate(startDate)} to ${formatDisplayDate(endDate)}`;
             const ownerName = document.getElementById('ownerName').value.trim() || 'Owner';
-            const commissionPct = parseFloat(document.getElementById('commission').value) || 0;
             const expenses = parseFloat(document.getElementById('expenses').value) || 0;
             const workerRows = document.querySelectorAll('.worker-row');
             const workers = [];
@@ -508,8 +517,9 @@
             workerRows.forEach(row => {
                 const name = row.querySelector('.w-name').value.trim() || 'Unknown';
                 const gross = parseFloat(row.querySelector('.w-gross').value) || 0;
+                const ownerPct = parseFloat(row.querySelector('.w-commission').value) || 0;
                 if (gross > 0) {
-                    workers.push({ name, gross });
+                    workers.push({ name, gross, ownerPct });
                     totalGross += gross;
                 }
             });
@@ -520,8 +530,6 @@
             }
 
             const netIncome = totalGross - expenses;
-            const ownerCut = netIncome * (commissionPct / 100);
-            const workersPool = netIncome - ownerCut;
             const tbody = document.querySelector('#resultsTable tbody');
 
             document.getElementById('resultsCard').classList.remove('hidden');
@@ -536,30 +544,36 @@
             `;
 
             const workersDataForDB = [];
+            let totalOwnerCut = 0;
 
             workers.forEach(worker => {
                 const proportion = worker.gross / totalGross;
-                const finalShare = workersPool * proportion;
+                const workerNet = netIncome * proportion;
+                const ownerCutFromWorker = workerNet * (worker.ownerPct / 100);
+                const finalShare = workerNet - ownerCutFromWorker;
                 const finalPct = (finalShare / totalGross) * 100;
-                workersDataForDB.push({ name: worker.name, gross: worker.gross, final_share: finalShare });
+                totalOwnerCut += ownerCutFromWorker;
+                workersDataForDB.push({ name: worker.name, gross: worker.gross, final_share: finalShare, owner_pct: worker.ownerPct });
 
                 tbody.innerHTML += `
                     <tr>
                         <td>${worker.name}</td>
                         <td>€${worker.gross.toFixed(2)}</td>
                         <td style="font-weight: 700;">€${finalShare.toFixed(2)}</td>
+                        <td>${worker.ownerPct}%</td>
                         <td>${finalPct.toFixed(1)}%</td>
                     </tr>
                 `;
             });
 
-            const ownerPct = (ownerCut / totalGross) * 100;
+            const ownerTotalPct = (totalOwnerCut / totalGross) * 100;
             tbody.innerHTML += `
                 <tr style="background-color: #f5f0e8; font-weight: 700;">
                     <td>${ownerName}</td>
                     <td>-</td>
-                    <td style="color: #cc785c;">€${ownerCut.toFixed(2)}</td>
-                    <td>${ownerPct.toFixed(1)}%</td>
+                    <td style="color: #cc785c;">€${totalOwnerCut.toFixed(2)}</td>
+                    <td>-</td>
+                    <td>${ownerTotalPct.toFixed(1)}%</td>
                 </tr>
             `;
 
@@ -569,7 +583,7 @@
                 owner_name: ownerName,
                 work_period: selectedPeriod,
                 total_gross: totalGross,
-                owner_cut: ownerCut,
+                owner_cut: totalOwnerCut,
                 expenses,
                 workers_data: workersDataForDB
             };

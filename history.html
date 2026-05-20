@@ -475,12 +475,15 @@
         function renderWorkerDetails(row) {
             const workers = Array.isArray(row.workers_data) ? row.workers_data : [];
             const ownerName = row.owner_name || 'Owner';
-            const workerLines = workers.map(worker => `
+            const workerLines = workers.map(worker => {
+                const pctLabel = worker.owner_pct != null ? ` (${worker.owner_pct}%)` : '';
+                return `
                 <div class="worker-line">
-                    <span>${escapeHtml(worker.name || 'Unknown')}</span>
+                    <span>${escapeHtml(worker.name || 'Unknown')}${pctLabel}</span>
                     <span>€${(Number(worker.final_share) || 0).toFixed(2)}</span>
                 </div>
-            `).join('');
+                `;
+            }).join('');
 
             return `
                 <div class="worker-details">
