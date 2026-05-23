@@ -175,12 +175,6 @@
             text-align: left;
         }
 
-        td:nth-child(2),
-        th:nth-child(2) {
-            text-align: left;
-            color: #cc785c;
-            font-weight: 700;
-        }
 
         .status {
             margin-top: 12px;
@@ -262,25 +256,134 @@
             margin-bottom: 0;
         }
 
-        .worker-details {
-            margin-top: 8px;
-            padding: 10px;
+        /* ===== History Entry Cards ===== */
+
+        .history-entry-card {
             background: #f5f0e8;
             border: 1px solid #e6dfd8;
-            border-radius: 10px;
-            font-size: 0.9em;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 16px;
         }
 
-        .worker-line {
+        .entry-header {
             display: flex;
             justify-content: space-between;
-            gap: 10px;
-            padding: 4px 0;
-            color: #252523;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 14px;
         }
 
-        .period-cell {
-            min-width: 220px;
+        .entry-period {
+            font-family: "Cormorant Garamond", "Times New Roman", serif;
+            font-size: 1.2em;
+            font-weight: 500;
+            color: #cc785c;
+            letter-spacing: -0.3px;
+        }
+
+        .entry-date {
+            font-size: 0.82em;
+            color: #6c6a64;
+            margin-top: 2px;
+        }
+
+        .entry-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .entry-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .entry-summary-item {
+            background: #fff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #e6dfd8;
+            text-align: center;
+        }
+
+        .entry-summary-label {
+            display: block;
+            font-size: 0.75em;
+            color: #6c6a64;
+            font-weight: 600;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .entry-summary-value {
+            display: block;
+            font-size: 1.05em;
+            font-weight: 700;
+            color: #141413;
+        }
+
+        .entry-net {
+            color: #c64545;
+        }
+
+        .entry-owner-cut {
+            color: #5db872;
+        }
+
+        .worker-breakdown-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e6dfd8;
+            margin-top: 0;
+        }
+
+        .worker-breakdown-table th {
+            background: #faf9f5;
+            color: #6c6a64;
+            font-weight: 600;
+            padding: 8px 10px;
+            font-size: 0.88em;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border-bottom: 1px solid #e6dfd8;
+        }
+
+        .worker-breakdown-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #f0ebe3;
+            color: #3d3d3a;
+        }
+
+        .worker-breakdown-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .worker-breakdown-table th:first-child,
+        .worker-breakdown-table td:first-child {
+            text-align: left;
+        }
+
+        .worker-breakdown-table th,
+        .worker-breakdown-table td {
+            text-align: right;
+        }
+
+        .take-home-value {
+            font-weight: 700;
+            color: #141413;
+        }
+
+        .owner-cut-value {
+            color: #cc785c;
+            font-weight: 600;
         }
 
         @media (max-width: 700px) {
@@ -289,8 +392,25 @@
                 grid-template-columns: 1fr;
             }
 
-            .action-cell {
-                min-width: 145px;
+            .entry-summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .entry-header {
+                flex-direction: column;
+            }
+
+            .entry-actions {
+                align-self: flex-end;
+            }
+
+            .worker-breakdown-table {
+                font-size: 0.8em;
+            }
+
+            .worker-breakdown-table th,
+            .worker-breakdown-table td {
+                padding: 6px 6px;
             }
         }
     </style>
@@ -347,24 +467,11 @@
             <canvas id="earningsChart" width="400" height="200"></canvas>
         </div>
 
-        <div class="card" style="overflow-x: auto;">
+        <div class="card">
             <h2>History List</h2>
             <p id="loadingText" class="muted" style="text-align: center;">Loading your data...</p>
             <p id="statusText" class="status info hidden"></p>
-            <table id="historyTable" class="hidden">
-                <thead>
-                    <tr>
-                        <th>Saved On</th>
-                        <th>Work Period</th>
-                    <th>Gross</th>
-                    <th>Expenses</th>
-                    <th>Owner Cut</th>
-                    <th>Details</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-                <tbody></tbody>
-            </table>
+            <div id="historyList" class="hidden"></div>
         </div>
     </div>
 
@@ -469,42 +576,107 @@
         function showNoData(message) {
             document.getElementById('loadingText').innerHTML = message;
             document.getElementById('loadingText').style.display = 'block';
-            document.getElementById('historyTable').classList.add('hidden');
+            document.getElementById('historyList').classList.add('hidden');
         }
 
-        function renderWorkerDetails(row) {
+        function renderEntryCard(row, index) {
             const workers = Array.isArray(row.workers_data) ? row.workers_data : [];
-            const ownerName = row.owner_name || 'Owner';
-            const workerLines = workers.map(worker => {
-                const pctLabel = worker.owner_pct != null ? ` (${worker.owner_pct}%)` : '';
-                return `
-                <div class="worker-line">
-                    <span>${escapeHtml(worker.name || 'Unknown')}${pctLabel}</span>
-                    <span>€${(Number(worker.final_share) || 0).toFixed(2)}</span>
-                </div>
-                `;
-            }).join('');
+            const ownerName = escapeHtml(row.owner_name || 'Owner');
+            const totalGross = Number(row.total_gross) || 0;
+            const expenses = Number(row.expenses) || 0;
+            const ownerCut = Number(row.owner_cut) || 0;
+            const netDistributable = totalGross - expenses;
+            const dateStr = new Date(row.created_at).toLocaleDateString(undefined, {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+
+            // Build worker breakdown rows
+            let workerRows = '';
+            if (workers.length > 0) {
+                workerRows = workers.map(worker => {
+                    const wName = escapeHtml(worker.name || 'Unknown');
+                    const wGross = Number(worker.gross) || 0;
+                    const wFinalShare = Number(worker.final_share) || 0;
+                    const wOwnerPct = worker.owner_pct != null ? Number(worker.owner_pct) : null;
+
+                    // Compute per-worker owner cut amount
+                    let wOwnerCutAmt = 0;
+                    if (wOwnerPct !== null && wOwnerPct < 100) {
+                        // ownerCut = finalShare * (pct / (100 - pct))
+                        wOwnerCutAmt = wFinalShare * (wOwnerPct / (100 - wOwnerPct));
+                    } else if (wOwnerPct === 100) {
+                        wOwnerCutAmt = wFinalShare + (wFinalShare); // entire net share
+                    }
+
+                    const pctDisplay = wOwnerPct !== null ? `${wOwnerPct}%` : '—';
+
+                    return `<tr>
+                        <td>${wName}</td>
+                        <td>€${wGross.toFixed(2)}</td>
+                        <td>${pctDisplay}</td>
+                        <td class="owner-cut-value">€${wOwnerCutAmt.toFixed(2)}</td>
+                        <td class="take-home-value">€${wFinalShare.toFixed(2)}</td>
+                    </tr>`;
+                }).join('');
+            } else {
+                workerRows = `<tr><td colspan="5" style="text-align:center; color:#6c6a64;">No worker details</td></tr>`;
+            }
 
             return `
-                <div class="worker-details">
-                    <div class="worker-line">
-                        <strong>${escapeHtml(ownerName)}</strong>
-                        <strong>€${(Number(row.owner_cut) || 0).toFixed(2)}</strong>
+            <div class="history-entry-card">
+                <div class="entry-header">
+                    <div>
+                        <div class="entry-period">${escapeHtml(row.work_period || 'N/A')}</div>
+                        <div class="entry-date">Saved ${dateStr}</div>
                     </div>
-                    ${workerLines || '<div class="worker-line"><span>No worker details</span><span>-</span></div>'}
+                    <div class="entry-actions">
+                        <button class="action-btn action-edit" type="button" onclick="openEditModal(${index})">Modify</button>
+                        <button class="action-btn action-delete" type="button" onclick="deleteHistoryEntry(${index})">Delete</button>
+                    </div>
                 </div>
-            `;
+                <div class="entry-summary-grid">
+                    <div class="entry-summary-item">
+                        <span class="entry-summary-label">Total Gross</span>
+                        <span class="entry-summary-value">€${totalGross.toFixed(2)}</span>
+                    </div>
+                    <div class="entry-summary-item">
+                        <span class="entry-summary-label">Expenses</span>
+                        <span class="entry-summary-value entry-net">€${expenses.toFixed(2)}</span>
+                    </div>
+                    <div class="entry-summary-item">
+                        <span class="entry-summary-label">Net Distributable</span>
+                        <span class="entry-summary-value">€${netDistributable.toFixed(2)}</span>
+                    </div>
+                    <div class="entry-summary-item">
+                        <span class="entry-summary-label">${ownerName}'s Cut</span>
+                        <span class="entry-summary-value entry-owner-cut">€${ownerCut.toFixed(2)}</span>
+                    </div>
+                </div>
+                <table class="worker-breakdown-table">
+                    <thead>
+                        <tr>
+                            <th>Worker</th>
+                            <th>Gross</th>
+                            <th>Owner %</th>
+                            <th>Owner Cut</th>
+                            <th>Take-home</th>
+                        </tr>
+                    </thead>
+                    <tbody>${workerRows}</tbody>
+                </table>
+            </div>`;
         }
 
         function renderDashboard(data) {
-            const tbody = document.querySelector('#historyTable tbody');
+            const historyList = document.getElementById('historyList');
             const labels = [];
             const grossData = [];
             const ownerData = [];
             let totalGrossEver = 0;
             let totalOwnerEver = 0;
 
-            tbody.innerHTML = '';
+            historyList.innerHTML = '';
 
             [...data].reverse().forEach(row => {
                 const dateObj = new Date(row.created_at);
@@ -516,26 +688,13 @@
             data.forEach((row, index) => {
                 totalGrossEver += Number(row.total_gross) || 0;
                 totalOwnerEver += Number(row.owner_cut) || 0;
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${escapeHtml(new Date(row.created_at).toLocaleDateString())}</td>
-                        <td class="period-cell">${escapeHtml(row.work_period || 'N/A')}</td>
-                        <td>€${(Number(row.total_gross) || 0).toFixed(2)}</td>
-                        <td>€${(Number(row.expenses) || 0).toFixed(2)}</td>
-                        <td style="font-weight: 700; color: #5db872;">€${(Number(row.owner_cut) || 0).toFixed(2)}</td>
-                        <td>${renderWorkerDetails(row)}</td>
-                        <td class="action-cell">
-                            <button class="action-btn action-edit" type="button" onclick="openEditModal(${index})">Modify</button>
-                            <button class="action-btn action-delete" type="button" onclick="deleteHistoryEntry(${index})">Delete</button>
-                        </td>
-                    </tr>
-                `;
+                historyList.innerHTML += renderEntryCard(row, index);
             });
 
             document.getElementById('stat-gross').innerText = `€${totalGrossEver.toFixed(2)}`;
             document.getElementById('stat-owner').innerText = `€${totalOwnerEver.toFixed(2)}`;
             document.getElementById('loadingText').style.display = 'none';
-            document.getElementById('historyTable').classList.remove('hidden');
+            document.getElementById('historyList').classList.remove('hidden');
 
             const ctx = document.getElementById('earningsChart').getContext('2d');
             if (earningsChart) earningsChart.destroy();
