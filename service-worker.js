@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wolt-income-splitter-v6';
+const CACHE_NAME = 'wolt-income-splitter-v7';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
