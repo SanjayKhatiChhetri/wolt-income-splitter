@@ -347,7 +347,7 @@
             <div class="flex-row">
                 <div class="input-group" style="flex: 1;">
                     <label for="ownerName">Owner Name</label>
-                    <input type="text" id="ownerName" value="Owner" placeholder="Your name">
+                    <input type="text" id="ownerName" value="Owner" placeholder="Your name" oninput="updateOwnerLabels()">
                 </div>
                 <div class="input-group" style="flex: 1;">
                     <label for="commission">Default Owner %</label>
@@ -384,7 +384,7 @@
                             <th>Name</th>
                             <th>Gross</th>
                             <th>Take-home</th>
-                            <th>Owner %</th>
+                            <th id="ownerPctHeader">Owner %</th>
                             <th>Share %</th>
                         </tr>
                     </thead>
@@ -469,14 +469,24 @@
             }
         }
 
+        function updateOwnerLabels() {
+            const name = document.getElementById('ownerName').value.trim() || 'Owner';
+            document.querySelectorAll('.w-commission').forEach(input => {
+                input.placeholder = `${name} %`;
+            });
+            const header = document.getElementById('ownerPctHeader');
+            if (header) header.textContent = `${name} %`;
+        }
+
         function addWorker() {
             const defaultPct = document.getElementById('commission').value || '25';
+            const ownerLabel = document.getElementById('ownerName').value.trim() || 'Owner';
             const div = document.createElement('div');
             div.className = 'worker-row';
             div.innerHTML = `
                 <input type="text" placeholder="Worker name" class="w-name">
                 <input type="number" placeholder="Gross (€)" class="w-gross" step="0.01">
-                <input type="number" placeholder="Owner %" class="w-commission" step="0.1" value="${defaultPct}">
+                <input type="number" placeholder="${ownerLabel} %" class="w-commission" step="0.1" value="${defaultPct}">
                 <button class="btn-danger" type="button" onclick="removeWorker(this)">X</button>
             `;
             document.getElementById('workersList').appendChild(div);
@@ -763,6 +773,7 @@
         }
 
         updatePeriodPreview();
+        updateOwnerLabels();
         initializeAuth();
     </script>
 </body>
