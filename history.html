@@ -386,6 +386,21 @@
             font-weight: 600;
         }
 
+        .share-pct-value {
+            color: #5a7c6f;
+            font-weight: 600;
+        }
+
+        .owner-summary-row {
+            background: #f5f0e8;
+            border-top: 2px solid #cc785c;
+        }
+
+        .owner-summary-row td {
+            padding-top: 10px !important;
+            padding-bottom: 10px !important;
+        }
+
         @media (max-width: 700px) {
             .auth-grid,
             .modal-grid {
@@ -591,6 +606,10 @@
                 hour: '2-digit', minute: '2-digit'
             });
 
+            // Compute owner's percentage share of net distributable
+            const ownerSharePct = netDistributable > 0 ? ((ownerCut / netDistributable) * 100) : 0;
+            const totalWorkerTakeHome = netDistributable - ownerCut;
+
             // Build worker breakdown rows
             let workerRows = '';
             if (workers.length > 0) {
@@ -603,13 +622,14 @@
                     // Compute per-worker owner cut amount
                     let wOwnerCutAmt = 0;
                     if (wOwnerPct !== null && wOwnerPct < 100) {
-                        // ownerCut = finalShare * (pct / (100 - pct))
                         wOwnerCutAmt = wFinalShare * (wOwnerPct / (100 - wOwnerPct));
                     } else if (wOwnerPct === 100) {
-                        wOwnerCutAmt = wFinalShare + (wFinalShare); // entire net share
+                        wOwnerCutAmt = wFinalShare + (wFinalShare);
                     }
 
                     const pctDisplay = wOwnerPct !== null ? `${wOwnerPct}%` : '—';
+                    // Worker's take-home as % of net distributable
+                    const wSharePct = netDistributable > 0 ? ((wFinalShare / netDistributable) * 100) : 0;
 
                     return `<tr>
                         <td>${wName}</td>
@@ -617,10 +637,21 @@
                         <td>${pctDisplay}</td>
                         <td class="owner-cut-value">€${wOwnerCutAmt.toFixed(2)}</td>
                         <td class="take-home-value">€${wFinalShare.toFixed(2)}</td>
+                        <td class="share-pct-value">${wSharePct.toFixed(1)}%</td>
                     </tr>`;
                 }).join('');
+
+                // Add owner summary row
+                workerRows += `<tr class="owner-summary-row">
+                    <td><strong>${ownerName}</strong></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="owner-cut-value"><strong>€${ownerCut.toFixed(2)}</strong></td>
+                    <td class="share-pct-value"><strong>${ownerSharePct.toFixed(1)}%</strong></td>
+                </tr>`;
             } else {
-                workerRows = `<tr><td colspan="5" style="text-align:center; color:#6c6a64;">No worker details</td></tr>`;
+                workerRows = `<tr><td colspan="6" style="text-align:center; color:#6c6a64;">No worker details</td></tr>`;
             }
 
             return `
@@ -649,7 +680,7 @@
                         <span class="entry-summary-value">€${netDistributable.toFixed(2)}</span>
                     </div>
                     <div class="entry-summary-item">
-                        <span class="entry-summary-label">${ownerName}'s Cut</span>
+                        <span class="entry-summary-label">${ownerName}'s Cut (${ownerSharePct.toFixed(1)}%)</span>
                         <span class="entry-summary-value entry-owner-cut">€${ownerCut.toFixed(2)}</span>
                     </div>
                 </div>
@@ -661,6 +692,7 @@
                             <th>${ownerName} %</th>
                             <th>${ownerName} Cut</th>
                             <th>Take-home</th>
+                            <th>% of Net</th>
                         </tr>
                     </thead>
                     <tbody>${workerRows}</tbody>
